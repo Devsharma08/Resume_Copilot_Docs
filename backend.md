@@ -2,7 +2,7 @@
 
 This document provides a high-level overview of the Career Copilot backend services, architecture, and module organization.
 
-For detailed database schemas, field definitions, and entity relationship diagrams, please refer directly to the [Database Design Documentation](file:///home/devsharma08/code/Resume_App/docs/database.md).
+For detailed database schemas, field definitions, and entity relationship diagrams, refer to the [Database Design Documentation](database.md).
 
 ---
 
@@ -43,11 +43,11 @@ backend/
 The database models are declared under `backend/app/models/` and extend the shared declarative `Base` from `app.database.base`. 
 
 The models are:
-1. **[User](file:///home/devsharma08/code/Resume_App/backend/app/models/user.py)**: Tracks user profiles and authentication identities.
-2. **[Resume](file:///home/devsharma08/code/Resume_App/backend/app/models/resume.py)**: Represents a user's resume container.
-3. **[ResumeVersion](file:///home/devsharma08/code/Resume_App/backend/app/models/resumeVersion.py)**: Holds immutable snapshots of resumes (documents/raw text/parsed data).
-4. **[ResumeAnalysis](file:///home/devsharma08/code/Resume_App/backend/app/models/resumeAnalysis.py)**: Stores AI-generated general scorecards and feedback for a resume version.
-5. **[Job](file:///home/devsharma08/code/Resume_App/backend/app/models/job.py)**: Stores job descriptions and contains an `application_status` tracking enum.
-6. **[CompatibilityReport](file:///home/devsharma08/code/Resume_App/backend/app/models/compatibilityReport.py)**: Stores match reports between a resume version and a job description.
-7. **[CoverLetter](file:///home/devsharma08/code/Resume_App/backend/app/models/coverLetter.py)**: Contains AI-generated cover letter texts.
-8. **[Application](file:///home/devsharma08/code/Resume_App/backend/app/models/application.py)**: Records specific user job application history.
+1. **User**: Tracks user profiles and authentication identities.
+2. **Resume**: Represents a user's resume container.
+3. **ResumeVersion**: Holds immutable snapshots of resumes (documents/raw text/parsed data).
+4. **ResumeAnalysis**: Stores AI-generated general scorecards and feedback for a resume version.
+5. **Job**: Stores job descriptions and contains an `application_status` tracking enum.
+6. **CompatibilityReport**: Stores match reports between a resume version and a job description.
+7. **CoverLetter**: Contains AI-generated cover letter texts.
+8. **Application**: Records specific user job application history.
