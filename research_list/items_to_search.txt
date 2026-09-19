@@ -1,1 +1,13 @@
 1. Indexed Priority Queue
+
+2. 4. Blind Shortlisting & Bias Mitigation - here cases best not keeping future position in mind. - here we'll pick candidates completely based on their hard skills and soft skills no hidden biases involved.
+
+and also keeping their future development in mind.(whether they can really contribute to the company and even has adaptability skills,ressilecence skills and soft skills).
+Anonymized Resumes: Candidate profiles are stripped of names, locations, graduation years, photos, and gender indicators during the initial review stage to minimize unconscious bias.
+
+now parse map resumes's skills to the candidate's personal record like age,education,gender,location,etc.
+
+from here on we'll pick candidates based on their skills and experience and most of all keeping their future development in mind.(whether they can really contribute to the company and even has adaptability skills,ressilecence skills and soft skills).
+
+these classes like age,education,gender,location,etc. these classes are the most important ones to pick candidates based on their skills and experience and most of all keeping their future development in mind.(whether they can really contribute to the company and even has adaptability skills,ressilecence skills and soft skills).
+combining these classes with weights and then picking the candidates based on the result.

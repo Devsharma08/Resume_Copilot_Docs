@@ -369,26 +369,26 @@ ResumeVersion
 
 ## Completed
 
-* Project planning
+* Project planning & Architecture design
 * Technology stack finalized
-* Folder structure finalized
-* Dockerized PostgreSQL
-* DBeaver setup
-* SQLAlchemy foundation
-* ORM concepts
-* JSONB concepts
-* Database relationship design
+* Dockerized PostgreSQL & DBeaver setup
+* SQLAlchemy ORM & Alembic database migrations
+* Database schema & models (User, Resume, ResumeVersion, ResumeAnalysis, Job, CompatibilityReport, CoverLetter, Application)
+* Full CRUD Repositories & FastAPI Router endpoints
+* Local AI Integration via Ollama (`qwen2.5:1.5b`) & Structured JSON System Prompts
+* Document Parsing Service (PDF & DOCX plain text extraction)
+* Next.js 16 Frontend initialization with pnpm & core production packages (`@tanstack/react-query`, `framer-motion`, `recharts`, `react-hook-form`, `zod`, `axios`, `lucide-react`)
 
 ---
 
 ## Next Milestone
 
-* Configure SQLAlchemy
-* Initialize Alembic
-* Create User model
-* Generate first migration
-* Verify schema in DBeaver
-* Implement User CRUD
+* Configure Frontend Providers (`QueryClientProvider`) & Utility Client (`lib/api.ts`)
+* Build UI Design System & Reusable Components (Buttons, Cards, Score Badges)
+* Implement Interactive Resume Upload Dropzone Component
+* Build ATS Score Analysis & Feedback Dashboard Page
+* Build Job Description Matching & AI Cover Letter Generator Views
+
 
 ---
 
