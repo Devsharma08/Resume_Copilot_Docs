@@ -1,0 +1,1072 @@
+link - https://chatgpt.com/c/6aaf9875-1904-83ee-8be8-73850586739e
+
+Yes — this is a stronger project architecture than the current single-pass design, provided you make one important change: treat Step 1 as a cheap preliminary screening/funnel, not the final ranking system.
+
+Your revised architecture should be
+RESUME
+  ↓
+STEP 1 — Preliminary Screening
+  ├─ Structured extraction
+  ├─ Skill Graph construction
+  ├─ Basic semantic/role matching
+  └─ Preliminary Top-K / Top-K'
+              ↓
+        selected candidates
+              ↓
+STEP 2 — GADS / EGCA
+  ├─ Evidence provenance
+  ├─ Evidence states
+  ├─ P_hard policy checks
+  ├─ Uncertainty
+  ├─ M_G
+  └─ Human-review routing
+              ↓
+      FINAL GOVERNED RANKING
+              ↓
+       Recruiter decision
+Why I think this is better
+
+1. It gives GADS a very clear purpose.
+
+Step 1 answers:
+
+“Who appears relevant enough to investigate further?”
+
+GADS answers:
+
+“Among these seemingly relevant candidates, which claims are actually supported, which mandatory requirements are satisfied, and where are we uncertain?”
+
+That separation is conceptually strong and much easier to explain in a research paper.
+
+Your current feasibility document already separates extraction, evidence evaluation, policy adjudication and scoring/routing, but currently treats them as one four-stage pipeline.
+
+2. Your reuse of Step-1 data is a very good engineering decision.
+
+Don't make GADS re-read the entire PDF.
+
+Store:
+
+Candidate
+├── structured claims
+├── normalized skills
+├── skill graph representation
+├── preliminary score
+└── evidence references
+
+Then GADS consumes those objects.
+
+That makes your second stage genuinely incremental rather than duplicating computation.
+
+3. But there is one serious problem with “Top-K → GADS.”
+
+Suppose:
+
+K = 10
+
+Your preliminary model selects 10 candidates.
+
+Candidate #3 looks excellent semantically but actually fails a mandatory degree requirement.
+
+GADS rejects them.
+
+Now you have only 9 candidates.
+
+But candidate #11 may have been eligible and should have entered.
+
+So do not use the preliminary Top-K as the final candidate pool.
+
+Instead:
+
+Initial Top-K' → GADS → Final Top-K
+
+For example:
+
+1000 candidates
+      ↓
+Pre-screen
+      ↓
+Top 50
+      ↓
+GADS
+      ↓
+Final Top 10
+
+Or apply cheap mandatory eligibility filters before the preliminary queue, while reserving expensive evidence analysis for the finalists.
+
+This is probably the single most important architectural correction to your idea.
+
+4. I would also change what PBPQ means in the two stages
+
+Don't have one PBPQ that pretends to produce the final ranking and then run GADS afterwards.
+
+Use two concepts:
+
+Preliminary Queue
+
+“Which candidates deserve deeper analysis?”
+
+Governed Queue
+
+“After evidence/policy/uncertainty analysis, which candidates remain strongest?”
+
+That gives you:
+
+PBPQ_pre
+     ↓
+GADS
+     ↓
+PBPQ_final
+
+This also creates a very good research experiment:
+
+How much does the governed ranking change compared with the initial similarity-based ranking?
+
+That is much more interesting scientifically than simply showing that GADS produces a score.
+
+5. Your research paper becomes stronger too
+
+You now have a natural baseline vs governed system comparison:
+
+System	Uses evidence	Hard policy	Uncertainty	Human routing
+Preliminary screening	No/limited	Basic	No	No
+GADS/EGCA	Yes	Yes	Yes	Yes
+
+Then you can test:
+
+Baseline ranking
+       vs
+Governed ranking
+
+under your four existing scenarios:
+
+keyword stuffing
+no public profile
+adjacent technology
+arrival-order stability
+
+Your current feasibility plan already defines these experiments.
+
+This gives the paper a much cleaner argument:
+
+“Does adding an evidence-governance layer after conventional candidate screening reduce specific failure modes?”
+
+That's a strong, testable research question.
+
+6. One thing I would NOT do
+
+Don't make Step 1 itself too sophisticated.
+
+If Step 1 already contains:
+
+evidence provenance,
+uncertainty,
+policy adjudication,
+sophisticated M_G,
+adversarial defense,
+
+then GADS has nothing meaningful left to contribute.
+
+Step 1 should intentionally be the baseline.
+
+Something like:
+
+Step 1:
+Resume → structured claims → skill normalization → semantic fit → preliminary queue
+
+Step 2:
+Preliminary candidates → evidence → policy → uncertainty → governed score
+
+That separation gives you a clean experimental story.
+
+7. One research-design warning
+
+There is a danger in only running GADS on the preselected candidates:
+
+GADS can never recover a good candidate that Step 1 completely missed.
+
+So your paper should explicitly say:
+
+GADS governs and refines the candidate representation within the candidate pool admitted by the preliminary screening stage.
+
+Don't claim that GADS improves the entire hiring process unless you evaluate candidates outside that pool too.
+
+A nice solution is to keep a small evaluation set outside the preliminary Top-K and test whether the first-stage filter itself misses relevant candidates.
+
+My overall assessment
+
+Architecture: stronger.
+
+Engineering: more efficient.
+
+Research framing: significantly better.
+
+Main fix required: make Step 1 a pre-screen, not the final Top-K; use Top-K' → GADS → Final Top-K.
+
+And I would rename the stages explicitly:
+
+Stage 1 — Candidate Discovery / Preliminary Screening
+
+Stage 2 — Evidence-Governed Assessment (GADS/EGCA)
+
+That makes it immediately obvious why the second layer exists.
+
+One more important point: this is a meaningful change from your current feasibility document, where the four stages currently run as the core end-to-end pipeline and PBPQ sits inside the scoring stage. So I'd update the project specification before implementation rather than quietly mixing the two architectures.
+
+obviously by top k from step-1 of whole screening process i didn't meant to only select top-k from total candidate we must find some way to find % or number of candidates to consider on step-2. now even how many candidates passed for step-2 depends on total candidates applied or may even depends on domain, we even need to figure this out now too
+
+Exactly. The real design problem is now not “Top-K or not?” but “How do we decide the size of the candidate pool that deserves expensive GADS evaluation?”
+
+I think this should become a separate research component of your architecture rather than a fixed percentage.
+
+The better model
+
+You have:
+
+All applicants
+      ↓
+Stage 1 — Cheap preliminary screening
+      ↓
+Adaptive Deep-Assessment Gate
+      ↓
+Stage 2 — GADS / EGCA
+      ↓
+Final shortlist
+
+The new Adaptive Deep-Assessment Gate decides how many candidates move to GADS.
+
+Don't use a fixed rule like:
+
+“Always send top 10% to GADS.”
+
+That will behave badly.
+
+Imagine:
+
+50 applicants   → 5 candidates
+500 applicants  → 50 candidates
+50,000 applicants → 5,000 candidates
+
+The last case destroys the whole reason for having a computationally expensive second stage.
+
+And the opposite problem exists too:
+
+50 applicants
+
+where perhaps 20 candidates are genuinely close to the role, but you arbitrarily send only 5.
+
+I would make the gate adaptive using 3 signals
+1. Applicant volume
+
+Obviously:
+
+N = total applicants
+
+More applicants can justify a larger absolute GADS pool, but not linearly.
+
+Going from 100 → 1,000 applicants shouldn't necessarily mean 10× more expensive processing.
+
+A logarithmic or sublinear growth model is much more sensible.
+
+Conceptually:
+
+DeepPoolSize ∝ log(N)
+
+rather than:
+
+DeepPoolSize ∝ N
+
+You don't have to commit to a specific mathematical function yet. That's something you can experimentally evaluate.
+
+2. Role complexity
+
+This is the part you correctly identified.
+
+A simple role:
+
+Frontend Developer
+
+Required:
+React
+JavaScript
+HTML/CSS
+
+doesn't need the same deep-assessment budget as:
+
+ML Engineer
+
+Required:
+Python
+PyTorch
+ML fundamentals
+Deep Learning
+Statistics
+Model deployment
+Cloud
+Research experience
+
+So introduce a Role Complexity Index.
+
+For example, it could consider:
+
+Role Complexity
+├── number of mandatory skills
+├── number of preferred skills
+├── skill relationships/dependencies
+├── number of hard constraints
+├── evidence difficulty
+└── ambiguity of skill assessment
+
+You don't need to claim this is objectively “complexity.” Call it something like:
+
+Assessment Complexity Score (ACS)
+
+because you're measuring how demanding the screening task is, not how difficult the profession is.
+
+3. Distribution of Stage-1 scores
+
+This is actually the most important signal.
+
+Suppose 1,000 people apply.
+
+Case A — clear separation
+0–700        very low
+701–940      moderate
+941–960      strong
+961–1000     very strong
+
+There is an obvious high-quality region.
+
+You don't need to send hundreds of candidates to GADS.
+
+Case B — everyone is close
+820
+818
+817
+816
+814
+813
+812
+811
+...
+
+Now the preliminary model can't confidently separate them.
+
+That's exactly where GADS becomes valuable.
+
+So the system should recognize:
+
+“Stage 1 has low discriminatory confidence.”
+
+and send a larger proportion to Stage 2.
+
+This gives you a much better architecture
+
+I'd formulate it as:
+
+                    ALL CANDIDATES
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │       STAGE 1       │
+              │ Preliminary Screen  │
+              │                     │
+              │ • extraction        │
+              │ • normalization     │
+              │ • skill graph       │
+              │ • semantic matching │
+              │ • cheap rules       │
+              └──────────┬──────────┘
+                         │
+                         ▼
+                 Candidate Scores
+                         │
+             ┌───────────┴────────────┐
+             │ Adaptive Deep-Assessment│
+             │        Gate             │
+             │                         │
+             │ N = applicant count     │
+             │ C = assessment complexity│
+             │ D = score distribution   │
+             └───────────┬─────────────┘
+                         │
+                         ▼
+                Selected Deep Pool
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │       STAGE 2       │
+              │     GADS / EGCA     │
+              │                     │
+              │ evidence            │
+              │ provenance          │
+              │ P_hard              │
+              │ uncertainty         │
+              │ M_G                 │
+              │ human routing       │
+              └──────────┬──────────┘
+                         │
+                         ▼
+                  Final Candidate Pool
+
+That is considerably more interesting as a research architecture than simply saying “run GADS on the top 10%.”
+
+There is an even better idea
+
+Instead of deciding the Stage-2 size only once, make it progressive.
+
+Suppose you initially send 30 candidates to GADS.
+
+After processing them, you discover:
+
+“There are still 15 candidates from the Stage-1 boundary whose preliminary scores are extremely close to the current GADS shortlist.”
+
+Then process another batch.
+
+So:
+
+Stage 1
+   ↓
+30 candidates → GADS
+   ↓
+Is the shortlist clearly separated?
+   │
+   ├── YES → stop
+   │
+   └── NO
+         ↓
+      next 20
+         ↓
+       GADS
+         ↓
+      reassess
+
+This is much closer to an actual resource-aware screening system.
+
+You could call it:
+
+Adaptive Deep-Assessment Routing
+
+or
+
+Progressive GADS Evaluation
+
+This also solves your domain problem
+
+Instead of manually saying:
+
+Backend = 20%
+ML = 30%
+Frontend = 10%
+
+you let the system derive the initial assessment budget from measurable properties.
+
+For example:
+
+Deep Assessment Need =
+Applicant Volume
++ Role Assessment Complexity
++ Stage-1 Uncertainty
+
+Conceptually:
+
+B_GADS = f(N, C_role, U_stage1)
+
+where:
+
+N = number of applicants
+C_role = role assessment complexity
+U_stage1 = uncertainty/ambiguity in preliminary screening
+B_GADS = number of candidates sent to GADS
+
+The exact function should be an experimental parameter, not something you invent and call optimal.
+
+That fits very nicely with your existing research philosophy around declaring weights and evaluating them rather than pretending arbitrary values are scientifically optimal. Your feasibility document already explicitly says calibrated M_G weights are outside the current scope because outcome data isn't available.
+
+I would add one more constraint: minimum and maximum bounds
+
+You don't want weird cases like:
+
+N = 20
+→ GADS only evaluates 1
+
+or
+
+N = 100,000
+→ GADS evaluates 30,000
+
+So:
+
+B_min ≤ B_GADS ≤ B_max
+
+The system can still adapt within those boundaries.
+
+For example, conceptually:
+
+Small applicant pool
+→ larger percentage
+
+Huge applicant pool
+→ smaller percentage but larger absolute pool
+
+High uncertainty
+→ increase deep pool
+
+Low uncertainty + clear score separation
+→ decrease deep pool
+
+Complex role
+→ increase deep pool
+
+That's a coherent policy.
+
+And this gives you a potentially excellent experiment
+
+Your current project has four experiments.
+
+I would consider adding a fifth only if you have time:
+
+E5 — Adaptive Deep-Assessment Efficiency
+
+Compare:
+
+Fixed percentage
+vs
+Fixed K
+vs
+Adaptive Gate
+
+Measure:
+
+GADS candidates processed
++
+final shortlist consistency
++
+missed relevant candidates
++
+computation saved
+
+The important metric isn't simply:
+
+“Did adaptive routing reduce computation?”
+
+because you could trivially reduce computation by evaluating nobody.
+
+You need the trade-off:
+
+How much deep computation can be avoided while preserving the quality/stability of the final candidate pool?
+
+That is a much more meaningful research question.
+
+One architectural distinction I'd lock in now
+
+Don't let PBPQ itself decide how much GADS to run.
+
+Instead:
+
+Stage 1 score
+       ↓
+Adaptive Deep-Assessment Gate
+       ↓
+GADS
+       ↓
+Governed M_G
+       ↓
+PBPQ_final
+
+So there are three distinct responsibilities:
+
+Stage 1: cheaply find potentially relevant candidates.
+
+Adaptive Gate: decide who deserves expensive scrutiny.
+
+GADS: deeply assess evidence and uncertainty.
+
+Final PBPQ: maintain the governed shortlist.
+
+That separation gives your system a very clean research story and prevents the architecture from becoming one giant scoring formula.
+
+yes we also have to progrssively further select candidates until required candidates not found also setting up a baseline till how low can we go we even may to set that up using some kind of algo must have reason for every step
+
+Yes. At this point, I would make the progressive selection mechanism itself a formal algorithmic component of the research, rather than an implementation detail.
+
+The key idea should be:
+
+Do not decide beforehand that “20% of candidates go to GADS.” Instead, start with a justified initial pool, run GADS, measure whether the required number of sufficiently qualified candidates has been found, and progressively expand the pool when the evidence says the current pool is insufficient.
+
+Your existing project already has the right ingredients for this: preliminary ranking, PBPQ, evidence evaluation, P_hard, M_G, uncertainty and a final shortlist.
+
+1. First define what “enough candidates” means
+
+You need a variable that represents the actual recruitment requirement.
+
+Let:
+
+H = number of candidates ultimately required
+
+Suppose a company wants:
+
+H = 5 hires
+
+You should not stop as soon as GADS finds five people.
+
+You need a candidate reserve because some may later be rejected, withdrawn, or require human review.
+
+So define:
+
+R = required governed candidates
+
+where R > H.
+
+The exact reserve factor should become a configurable project parameter, not a hard-coded universal truth.
+
+For your experiments, you can test different reserve levels rather than claiming one is universally correct.
+
+2. The first stage should establish a baseline
+
+This is where I agree strongly with you:
+
+The system needs a principled answer for “how far down the Stage-1 ranking are we willing to go?”
+
+Don't choose:
+
+Top 10%
+
+just because it sounds reasonable.
+
+Instead, use your synthetic ground-truth data to determine a minimum acceptable Stage-1 coverage threshold.
+
+The key concept is recall.
+
+Suppose, after running your complete GADS process on the experimental dataset, you know which candidates actually satisfy your research-defined target conditions.
+
+Now ask:
+
+“If I only keep the top X% from Stage 1, how many of those relevant candidates do I recover?”
+
+For example:
+
+Stage-1 pool	Relevant candidates recovered
+Top 5%	72%
+Top 10%	88%
+Top 15%	95%
+Top 20%	98%
+
+You could then define a research constraint such as:
+
+Choose the smallest Stage-1 pool that achieves at least a predefined coverage target.
+
+That's a much stronger justification than:
+
+“We decided to use top 15%.”
+
+3. Formulate this as an optimization problem
+
+This is where your research becomes considerably cleaner.
+
+You want to minimize expensive GADS computation while maintaining sufficient coverage.
+
+Conceptually:
+
+Minimize:
+    Cost of GADS evaluations
+
+Subject to:
+    Recall of relevant candidates >= τ
+
+Where:
+
+Cost = number of candidates subjected to expensive Stage 2
+τ = required coverage threshold
+
+You can evaluate several τ values in experiments.
+
+So your algorithm is solving:
+
+“How few candidates can we deeply assess without losing too many candidates that should have survived?”
+
+That's a legitimate research question.
+
+4. But don't use one fixed cutoff forever
+
+This is where your progressive idea comes in.
+
+Imagine:
+
+1000 candidates
+
+Stage 1 produces:
+
+Rank 1
+Rank 2
+...
+Rank 1000
+
+Suppose your baseline says:
+
+Initial GADS pool = 100 candidates
+
+You process those 100.
+
+GADS finds:
+
+Required = 10
+Found = 6
+
+You haven't found enough.
+
+So the system expands.
+
+101–150 → GADS
+
+Now:
+
+Found = 9
+
+Still insufficient.
+
+Expand again:
+
+151–200 → GADS
+
+Now:
+
+Found = 12
+
+You have enough.
+
+The algorithm can stop.
+
+5. But there should be a second stopping condition
+
+This is important.
+
+You don't want:
+
+“We have 10 candidates, therefore stop.”
+
+Suppose candidate #10 has:
+
+M_G = 61
+
+and candidate #11 has:
+
+M_G = 60.8
+
+There is essentially no separation.
+
+The current shortlist may be unstable.
+
+So I'd use two stopping conditions:
+
+Condition A — Quantity
+
+Enough candidates have satisfied the Stage-2 requirements.
+
+Qualified_GADS ≥ R
+Condition B — Boundary stability
+
+The candidates near the current cutoff are no longer producing meaningful changes when another batch is evaluated.
+
+Conceptually:
+
+|M_boundary_previous - M_boundary_current| < ε
+
+or the final PBPQ remains stable after expansion.
+
+This is particularly useful because your existing research already cares about ranking stability, including arrival-order stability of PBPQ.
+
+6. You also need an “uncertainty trigger”
+
+This is something I would add to the design.
+
+Suppose GADS processes 50 candidates and finds:
+
+40 → clearly acceptable
+5  → clearly unsuitable
+5  → highly uncertain
+
+Those five uncertain candidates shouldn't simply disappear.
+
+Your existing architecture already says high uncertainty should route candidates to humans.
+
+So the progressive algorithm should understand three outcomes:
+
+GADS result
+│
+├── Clearly acceptable
+│
+├── Clearly unsuitable
+│
+└── Uncertain → Human review
+
+Then the stopping decision is based on confirmed candidates, not merely high M_G.
+
+7. I'd make the expansion batches adaptive too
+
+Don't necessarily do:
+
++50
++50
++50
++50
+
+forever.
+
+Use the Stage-1 score distribution.
+
+For example:
+
+Rank 1–50       very high scores
+Rank 51–100     high
+Rank 101–150    moderate
+Rank 151–200    boundary
+
+If GADS finds very few acceptable candidates among the first 50, expand more aggressively.
+
+If GADS finds many strong candidates immediately, expand slowly or stop.
+
+So the system learns:
+
+“How useful is it to go further down this particular candidate pool?”
+
+8. Protect against Stage-1 mistakes
+
+This is one of the biggest weaknesses of a two-stage system.
+
+Suppose the real good candidate is ranked #173 in Stage 1 because the preliminary model misunderstood their resume.
+
+If you simply evaluate:
+
+Top 50
+→ GADS
+
+that candidate is permanently lost.
+
+So I would introduce a small boundary exploration mechanism.
+
+For every expansion round, evaluate:
+
+Primary batch
++
+Boundary/uncertainty candidates
+
+For example:
+
+Top 50
+      +
+Candidates 51–60 with unusual/uncertain Stage-1 signals
+
+This gives GADS a chance to recover candidates that Stage 1 scored incorrectly.
+
+This is especially important given that your project explicitly studies heterogeneous candidates, keyword stuffing, candidates without public profiles, and adjacent technologies.
+
+9. Now the whole algorithm becomes very clean
+
+I'd call the concept something like:
+
+Progressive Evidence-Governed Selection (PEGS)
+
+Not saying this has to be the final name; I'm showing you the structure.
+
+INPUT
+N candidates
+H required final candidates
+Role Blueprint
+Stage-1 scores
+Stage-1 skill graph
+Step 1 — Establish baseline
+
+Use validation/synthetic data to determine the minimum Stage-1 coverage necessary to meet your chosen recall target.
+
+Baseline pool = B0
+Step 2 — Initial GADS evaluation
+
+Run GADS on B0.
+
+Evidence
+→ P_hard
+→ M_G
+→ uncertainty
+→ PBPQ
+Step 3 — Check whether enough candidates exist
+Qualified >= R?
+
+Yes → continue to stability check.
+
+No → expand pool.
+
+Step 4 — Expand
+B0 → B1 → B2 → B3 ...
+
+with each batch determined by:
+
+Applicant volume
+Role complexity
+Stage-1 score distribution
+Stage-1 uncertainty
+Previous GADS yield
+Step 5 — Check stability
+
+If:
+
+Qualified >= R
+
+and
+
+shortlist is stable
+
+stop.
+
+Otherwise expand again.
+
+Step 6 — Exhaustion condition
+
+If the entire applicant pool has been examined and:
+
+Qualified < R
+
+the system reports:
+
+Insufficient qualified candidates found
+
+rather than lowering standards simply to fill the required number.
+
+That last part is very important from a governance perspective.
+
+10. The “how low can we go?” problem becomes an actual experiment
+
+This is where I think your idea becomes research-worthy.
+
+You can define:
+
+Stage-1 depth =
+number of candidates admitted to Stage 2
+────────────────────────────────────
+total applicants
+
+Then compare:
+
+5%
+10%
+15%
+20%
+25%
+...
+
+and measure:
+
+GADS computation cost
+Candidate recall
+Final shortlist stability
+False exclusions
+
+You might discover something like:
+
+5%  → cheap but misses too many
+10% → acceptable coverage
+15% → little additional benefit
+20% → almost no additional recall
+
+Then your algorithm has evidence for selecting its operating region.
+
+Don't assume those numbers now—they are exactly what your experiments should determine.
+
+11. This also gives you a much stronger research question
+
+Your original question was roughly:
+
+“Does evidence-governed screening improve resume evaluation?”
+
+The expanded system allows a much more interesting question:
+
+“Can an adaptive two-stage screening architecture minimize expensive evidence evaluation while maintaining a predefined level of candidate coverage and shortlist stability?”
+
+Now you have two research contributions:
+
+Contribution 1
+
+Evidence governance
+
+Does GADS make candidate assessment more evidence-grounded and auditable?
+
+Contribution 2
+
+Computational governance
+
+Can the system decide how many candidates actually need expensive evidence assessment rather than evaluating everyone?
+
+That second contribution is where your new idea adds real value.
+
+12. One thing I'd change in your terminology
+
+I wouldn't say:
+
+“GADS keeps selecting candidates until required candidates are found.”
+
+Because GADS itself isn't really the selection mechanism.
+
+I'd define the responsibilities as:
+
+Stage 1
+→ Candidate generation
+
+Adaptive Gate
+→ Candidate depth control
+
+GADS
+→ Evidence-governed assessment
+
+PBPQ
+→ Maintains governed candidate ranking
+
+Stopping Policy
+→ Determines when enough evidence has been obtained
+
+That's cleaner architecturally.
+
+Your current feasibility document already treats P_hard as a gate, M_G as a heuristic, and PBPQ as the top-K mechanism; keeping these responsibilities separate will make the revised design easier to defend.
+
+The resulting architecture I'd lock in
+                ALL APPLICATIONS
+                       │
+                       ▼
+        ┌──────────────────────────┐
+        │       STAGE 1            │
+        │ Preliminary Screening    │
+        │                          │
+        │ Extraction               │
+        │ Skill Graph              │
+        │ Semantic Matching        │
+        │ Preliminary PBPQ         │
+        └────────────┬─────────────┘
+                     │
+                     ▼
+        ┌──────────────────────────┐
+        │  ADAPTIVE DEPTH CONTROL  │
+        │                          │
+        │ Baseline coverage        │
+        │ Applicant volume         │
+        │ Role complexity          │
+        │ Score distribution       │
+        │ Progressive expansion    │
+        └────────────┬─────────────┘
+                     │
+                     ▼
+             GADS / EGCA
+                     │
+       ┌─────────────┼──────────────┐
+       ▼             ▼              ▼
+   Evidence       P_hard          Uncertainty
+       │             │              │
+       └─────────────┼──────────────┘
+                     ▼
+                    M_G
+                     │
+                     ▼
+              FINAL PBPQ
+                     │
+              ┌──────┴───────┐
+              ▼              ▼
+        Final shortlist   Human review
+
+The crucial research principle is: every threshold, expansion rule, and stopping condition should have an explicit objective and then be validated experimentally. That fits your existing philosophy of controlled experiments and avoids arbitrary “magic numbers.” Your current project already plans synthetic candidates and measurable experiments, so this can be added as an extension rather than completely changing the foundation.
