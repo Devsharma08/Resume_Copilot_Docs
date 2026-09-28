@@ -1,0 +1,1113 @@
+link - https://chatgpt.com/c/6aba90bd-fc7c-83e8-aad4-16887b2f1baa
+
+
+Yes. After going through the two project documents in files.zip together with the earlier architecture discussion, I would refine EGCA rather than replace it.
+
+The biggest architectural improvement is this:
+
+Do not treat “resume screening” as one scoring problem. Treat it as four separate trust problems:
+What was written → What can be supported → What rules are satisfied → How should qualified candidates be ordered.
+
+That separation makes your system much easier to defend as a research architecture.
+
+Your existing design already moves in this direction: Stage 1 produces a preliminary ranking, Stage 2 introduces evidence governance and policy adjudication, and PEGS controls how much of the pool receives the expensive evaluation.
+
+1. Refined EGCA Architecture
+                    ┌──────────────────────────────┐
+                    │      Candidate Resume        │
+                    │         PDF / DOCX           │
+                    └──────────────┬───────────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │  P0. TRUST BOUNDARY           │
+                    │  Immutable document snapshot  │
+                    │  Controlled extraction input  │
+                    │  Injection / malformed-input  │
+                    │  containment                  │
+                    └──────────────┬───────────────┘
+                                   │
+                                   ▼
+               ┌────────────────────────────────────────┐
+               │          STAGE 1 — DISCOVERY            │
+               │                                        │
+               │  S1. LLM Claim Extraction              │
+               │  S2. Schema Validation                 │
+               │  S3. Skill Normalization                │
+               │  S4. Semantic Matching                 │
+               │  S5. Preliminary Ranked Queue          │
+               └──────────────────┬─────────────────────┘
+                                  │
+                                  ▼
+               ┌────────────────────────────────────────┐
+               │      P1. ADAPTIVE GATE / PEGS          │
+               │                                        │
+               │  Stage-1 distribution analysis         │
+               │  K' = K × buffer_multiplier            │
+               │  Forward buffered candidate pool       │
+               └──────────────────┬─────────────────────┘
+                                  │
+                                  ▼
+               ┌────────────────────────────────────────┐
+               │          STAGE 2 — GOVERNANCE           │
+               │                                        │
+               │  S6. Evidence Classification           │
+               │      NOT_OBSERVED                      │
+               │      SELF_CLAIMED                       │
+               │      INFERRED                           │
+               │      ARTIFACT_BACKED                    │
+               │      ASSESSED                           │
+               │                                        │
+               │  S7. Evidence Ledger                   │
+               │  S8. Skill Graph / Bounded Inference   │
+               │  S9. OPA P_hard Policy Gate            │
+               │  S10. M_G Governed Match Score         │
+               │  S11. Uncertainty Routing              │
+               └──────────────────┬─────────────────────┘
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+             P_hard = FAIL                P_hard = PASS
+                    │                           │
+                    ▼                           ▼
+             NOT ELIGIBLE               ┌─────────────────┐
+             + reason                    │ Qualified pool  │
+                                         └────────┬────────┘
+                                                  │
+                                                  ▼
+                                 ┌──────────────────────────┐
+                                 │ S12. FINAL RANKED QUEUE  │
+                                 │       by M_G             │
+                                 └────────────┬─────────────┘
+                                              │
+                                              ▼
+                                 ┌──────────────────────────┐
+                                 │ S13. PROGRESSIVE          │
+                                 │      EXPANSION            │
+                                 │                          │
+                                 │ insufficient candidates? │
+                                 │      ↓                   │
+                                 │ next fixed batch         │
+                                 │      ↓                   │
+                                 │ re-run Stage 2           │
+                                 └────────────┬─────────────┘
+                                              │
+                           ┌──────────────────┴─────────────────┐
+                           │                                    │
+                           ▼                                    ▼
+                   Target reached                         Pool exhausted
+                           │                                    │
+                           ▼                                    ▼
+                  Final shortlist                    Insufficiency report
+                           │
+                           ▼
+                ┌──────────────────────────┐
+                │ S14. AUDIT TRAIL         │
+                │ EvidenceLedger           │
+                │ ComplianceCertificate    │
+                │ AuditTrailLog             │
+                └──────────────────────────┘
+
+The important difference is that M_G is no longer conceptually the center of the architecture.
+
+The center becomes the separation of evidence, policy, ranking and uncertainty.
+
+2. The refined problem taxonomy
+
+Your earlier one-word answer, “Unverifiability,” is still useful as the root problem, but it is too broad to use as the complete research taxonomy.
+
+I would decompose it into:
+
+Problem	What current screening does	EGCA response
+P1 — Untrusted document input	Treats extracted resume content as trustworthy	Trust boundary + controlled extraction
+P2 — Claim unverifiability	Treats self-reported claims as facts	Evidence classification
+P3 — Vocabulary brittleness	Relies heavily on matching terminology	Skill normalization + semantic matching + graph
+P4 — Unsupported inference	Makes implicit equivalences without explaining them	Bounded skill-graph inference
+P5 — Mandatory requirement override	High similarity can compensate for missing requirements	Independent P_hard policy gate
+P6 — False certainty	Produces a score even when evidence is weak/missing	U_unc + human routing
+P7 — Missing-data penalty	Absence of a public profile can look like absence of skill	NOT_OBSERVED ≠ negative evidence
+P8 — Opaque decision path	Difficult to reconstruct why candidate was ranked/rejected	Evidence Ledger + AuditTrailLog
+P9 — Ranking/selection instability	Candidate order or cutoff can affect shortlist	PEGS + E4 stability test
+P10 — Computational cost	Full expensive evaluation of everyone is inefficient	Adaptive Gate + buffered expansion
+P11 — Pool insufficiency	Systems may relax criteria when not enough candidates qualify	Explicit pool-exhaustion state
+P12 — Bias/fairness	Historical or proxy patterns can affect screening	Explicitly bounded; not claimed solved
+P13 — Real-world validity	Synthetic experiments do not prove hiring effectiveness	Explicit research limitation
+
+That decomposition is much stronger for a paper because now every problem has a corresponding architectural control.
+
+3. Stage-by-stage mapping
+P0 — Trust Boundary
+Purpose
+
+Establish that the resume is input data, not an instruction source.
+
+Components
+
+Immutable Resume Snapshot
+
+The original uploaded document is stored as an immutable source artifact.
+
+Then extraction operates on a controlled representation of that document.
+
+Problems addressed
+
+Primarily:
+
+P1 — untrusted document input
+
+and partially:
+
+P1/P2 — document-level prompt injection and claim contamination
+
+Guardrails
+
+The LLM should only be allowed to produce a fixed schema such as:
+
+CandidateClaim
+    ├── claim_type
+    ├── technology
+    ├── duration
+    ├── context
+    ├── source_span
+    └── confidence
+
+Anything outside that contract is not allowed to become part of the downstream decision state.
+
+Your feasibility report already makes schema validation and malformed-output containment part of Stage 1.
+
+Important refinement
+
+I would not write in the paper that schema validation completely solves white-fonting or prompt injection.
+
+It doesn't.
+
+Schema validation limits what the model can return, but malicious text can still influence the model inside the allowed fields.
+
+So your architecture should describe this as:
+
+Prompt-injection containment, not complete prompt-injection elimination.
+
+For white-fonting specifically, a stronger future refinement would compare the document's visual/text representation against the extracted text layer so suspicious hidden content can be detected.
+
+That distinction will make your research claim much more defensible.
+
+4. Stage 1 — Claim Discovery
+
+This stage should have one philosophical rule:
+
+Stage 1 may discover claims, but it may not decide whether the claims are true.
+
+That is a very important boundary.
+
+S1 — LLM Extraction
+
+Input:
+
+Resume document
+
+Output:
+
+Structured CandidateClaims
+
+Problem addressed:
+
+P2 — unverifiable / unstructured claims
+
+But only at the extraction level.
+
+It does not verify the claim.
+
+For example:
+
+Candidate says:
+"Built scalable backend systems using Node.js."
+
+Stage 1 produces:
+
+technology = Node.js
+experience = backend development
+duration = ...
+source = resume section
+
+It must not output:
+
+Node.js expertise = VERIFIED
+
+That belongs to Stage 2.
+
+5. S2 — Schema Validation
+
+This is your first hard safety boundary.
+
+LLM output
+      ↓
+Pydantic schema
+      ↓
+valid -----------------> downstream
+invalid ----------------> quarantine + log
+Solves
+
+P1 — malformed model output
+
+part of P1 — prompt injection containment
+
+Does not solve
+
+It does not establish factual truth.
+
+That is why:
+
+extracted ≠ verified
+
+should become a foundational principle in the paper.
+
+6. S3 — Skill Normalization
+
+Example:
+
+ReactJS
+React.js
+React JS
+
+↓
+
+Canonical Skill Node:
+REACT
+Solves
+
+P3 — vocabulary brittleness
+
+This addresses the exact limitation identified in your literature discussion: keyword-based matching can treat equivalent technologies as different strings.
+
+7. S4 — Semantic Matching
+
+Here you keep embedding similarity.
+
+But the role of similarity needs to be explicitly downgraded.
+
+Old mental model
+Similarity score
+       ↓
+Hiring decision
+EGCA model
+Semantic similarity
+       ↓
+candidate discovery / ordering
+       ↓
+Adaptive Gate
+       ↓
+Evidence verification
+       ↓
+Policy
+       ↓
+Governed ranking
+
+So semantic similarity is now a retrieval signal, not a truth signal.
+
+This is one of the strongest conceptual improvements to your architecture.
+
+8. S5 — Preliminary Ranked Queue
+
+The output becomes:
+
+Candidate
+PreliminaryScore
+NormalizedSkills
+ClaimCount
+
+It is explicitly marked:
+
+PRELIMINARY — NON-GOVERNING
+
+That label matters.
+
+It prevents Stage 1 from accidentally becoming the real decision maker.
+
+9. P1 — Adaptive Gate / PEGS
+
+This is your computational-governance layer.
+
+The current specification says the gate examines the Stage-1 score distribution and forwards a buffered pool:
+
+K' = K × buffer_multiplier
+
+The extra candidates exist because some high-ranked candidates may later fail P_hard.
+
+This is exactly where your PEGS contribution belongs.
+
+Solves
+
+P10 — excessive Stage-2 computation
+
+and partially:
+
+P9 — shortlist coverage risk
+
+Does NOT solve
+
+It does not verify candidates.
+
+It does not establish fairness.
+
+It does not determine eligibility.
+
+It only answers:
+
+Who should receive the expensive evidence-governed evaluation next?
+
+That separation should be explicit in the paper.
+
+10. Stage 2 — Evidence Governance
+
+This is the actual heart of EGCA.
+
+S6 — Five-state evidence classifier
+
+Your five states are excellent because they create a distinction that ordinary resume screeners collapse:
+
+NOT_OBSERVED
+SELF_CLAIMED
+INFERRED
+ARTIFACT_BACKED
+ASSESSED
+Meaning
+SELF_CLAIMED
+"I say I know React."
+
+ARTIFACT_BACKED
+"There is candidate-provided evidence supporting React."
+
+INFERRED
+"Evidence for Fastify supports limited inference toward Express."
+
+ASSESSED
+"An explicit assessment provides evidence."
+
+NOT_OBSERVED
+"No evidence was available."
+
+Now your system doesn't simply ask:
+
+"Does the candidate have React?"
+
+It asks:
+
+"What type of evidence exists for the React claim?"
+
+That is your main response to P2 — unverifiability.
+
+The earlier project analysis already identified this as one of the strongest architectural differences between the paper's evidence-based proposal and your formalization.
+
+11. S7 — Evidence Ledger
+
+Every claim becomes something like:
+
+Claim
+  ↓
+Evidence Item
+  ↓
+Evidence State
+  ↓
+Source
+  ↓
+Timestamp
+  ↓
+Relationship
+  ↓
+Confidence / provenance
+
+So the system can answer:
+
+Why did this candidate receive credit for Express?
+
+Instead of:
+
+"The AI gave them 74."
+
+That is a fundamental change.
+
+12. S8 — Skill Knowledge Graph
+
+The graph should not simply be a synonym database.
+
+Your current relation model is better:
+
+DEPENDS_ON
+USES
+ALIAS_OF
+TRANSFERABLE_TO
+NOT_SUFFICIENT_FOR
+
+And inference is depth-limited.
+
+Example:
+
+Fastify
+   │
+   └── TRANSFERABLE_TO
+             ↓
+          Express
+
+The system may produce:
+
+Express → INFERRED
+
+but must never silently transform this into:
+
+Express → VERIFIED
+Solves
+
+P3 — vocabulary brittleness
+
+and
+
+P4 — unsupported inference
+
+E3 directly tests this behavior.
+
+Your existing experiment expects:
+
+Direct Express evidence
+        >
+Fastify-based inference
+        >
+No Node background
+
+while preserving the INFERRED label throughout the audit trail.
+
+13. S9 — OPA P_hard Gate
+
+This should become the most visibly isolated box in your architecture.
+
+             M_G
+              │
+              │ cannot override
+              ▼
+        ┌───────────────┐
+        │ P_hard Policy │
+        │   OPA/Rego    │
+        └───────────────┘
+              │
+       PASS ──┴── FAIL
+
+The policy engine doesn't ask:
+
+"How impressive is the candidate?"
+
+It asks:
+
+"Are mandatory requirements satisfied?"
+
+For example:
+
+required_degree = true
+required_experience >= 2 years
+required_skill = Node.js
+
+Then:
+
+P_hard = false
+
+means:
+
+candidate = ineligible
+
+No:
+
++20 semantic score
++10 adaptability
++30 evidence strength
+
+can compensate.
+
+This directly addresses P5 — mandatory requirement override, and your earlier architecture already identified the P_hard separation as one of its strongest governance mechanisms.
+
+14. S10 — Governed Match Score M_G
+
+Only after the policy gate should ranking happen.
+
+Conceptually:
+
+P_hard
+   │
+   ├── FAIL → excluded
+   │
+   └── PASS
+        ↓
+       M_G
+
+Your current formulation contains:
+
+Q_current
+E_prov
+G_adapt
+U_unc
+
+A conceptual form is:
+
+M_G =
+wq(Q_current)
++ we(E_prov)
++ wg(G_adapt)
+- wu(U_unc)
+
+The important research constraint from your feasibility report is that these weights are declared design hyperparameters, not claimed to be optimal.
+
+That is exactly right.
+
+Solves
+
+P6 — opaque scoring
+
+only partially.
+
+The score is still a heuristic.
+
+So the claim should be:
+
+M_G provides a governed, inspectable ranking construct.
+
+Not:
+
+M_G measures candidate quality.
+
+Your source documents explicitly keep that distinction. It is one of the most important limitations to preserve.
+
+15. S11 — Uncertainty Routing
+
+This should be treated as a third outcome, not a failure.
+
+Instead of:
+
+PASS / FAIL
+
+EGCA has:
+
+QUALIFIED
+NOT QUALIFIED
+HUMAN REVIEW
+
+For example:
+
+P_hard = PASS
+M_G = high
+U_unc = high
+       ↓
+HUMAN REVIEW
+
+This is important because a model should not be forced to turn insufficient evidence into a confident decision.
+
+Solves
+
+P6 — false certainty
+
+and part of:
+
+P2 — unverifiability
+
+The feasibility report already specifies that malformed LLM output and high uncertainty should route to human review rather than receive an automatic zero. That is a strong governance invariant.
+
+16. S12 — Final Ranked Queue
+
+Now you have:
+
+Policy-compliant candidates
+        ↓
+Evidence-governed ranking
+        ↓
+M_G
+        ↓
+Final Ranked Queue
+
+This is where the distinction becomes:
+
+Stage 1:
+"Who looks relevant?"
+
+Stage 2:
+"Who has support for those claims,
+who satisfies mandatory rules,
+and how strong/uncertain is the evidence?"
+
+That is much cleaner than calling the whole pipeline "AI resume scoring."
+
+17. S13 — Progressive Expansion
+
+This is the second half of PEGS.
+
+Suppose:
+
+Required shortlist R = 10
+
+Initial Stage-2 pool K' = 15
+
+After evidence + policy:
+Qualified = 7
+
+Do not do:
+
+Relax P_hard
+
+Instead:
+
+Expand next fixed batch
+        ↓
+Stage 2
+        ↓
+Re-evaluate
+
+Repeat until:
+
+Qualified >= R
+
+or:
+
+Candidate pool exhausted
+Solves
+
+P10 — computational efficiency
+
+P9 — coverage / shortlist insufficiency
+
+P11 — unethical/undefined relaxation
+
+The source specification explicitly says that pool exhaustion is reported rather than solved by relaxing eligibility standards.
+
+That should become one of your central safety invariants.
+
+18. S14 — Audit + Compliance Layer
+
+I would make this a cross-cutting layer, not simply the last step.
+
+Your three important records are:
+
+EvidenceLedger
+ComplianceCertificate
+AuditTrailLog
+
+And audit events should exist for:
+
+document ingestion
+↓
+extraction
+↓
+schema validation
+↓
+normalization
+↓
+semantic score
+↓
+gate decision
+↓
+evidence classification
+↓
+graph inference
+↓
+P_hard evaluation
+↓
+M_G calculation
+↓
+uncertainty routing
+↓
+expansion
+↓
+final shortlist
+
+So the system can reconstruct:
+
+What happened, why it happened, what evidence was used, what rule was applied, and which version of the policy produced the result.
+
+That is much stronger than "the model is explainable."
+
+19. Your hypotheses / experiments mapped cleanly
+
+One correction from the way we discussed this earlier:
+
+Your current documents explicitly define E1–E5 experiments, rather than formally naming hypotheses H1–H5. I would preserve that terminology in the paper instead of inventing a parallel hypothesis numbering system.
+
+Architectural proposition	Existing experiment	Stage
+Evidence governance reduces vulnerability to keyword-heavy unsupported claims	E1	Stage 2
+Missing public evidence must not be treated as negative evidence	E2	Stage 2
+Bounded graph inference can provide partial adjacent-skill credit without treating it as direct evidence	E3	Stage 2
+The governed selection process should remain stable to candidate arrival order	E4	PEGS + Stage 2
+Stage-2 depth can be traded against relevant-candidate recovery	E5	PEGS / Progressive Expansion
+
+E1–E4 are already mandatory in your feasibility specification; E5 is optional.
+
+20. The problem → stage → experiment map
+
+This is probably the single table I would put into your research paper.
+
+Problem	EGCA mechanism	Stage	Validation
+Resume contains unsupported claims	Evidence classification	Stage 2	E1
+Keyword stuffing	Evidence provenance rather than similarity alone	Stage 2	E1
+No public portfolio	NOT_OBSERVED neutral treatment	Stage 2	E2
+Adjacent technologies	Skill Knowledge Graph	Stage 2	E3
+Unsupported skill equivalence	Depth-limited INFERRED evidence	Stage 2	E3
+Similarity overriding requirements	OPA P_hard gate	Stage 2	Policy tests / architecture
+Missing evidence producing false rejection	NOT_OBSERVED semantics	Stage 2	E2
+High uncertainty forced into automatic decision	U_unc human routing	Stage 2	Architectural validation
+Candidate order affects shortlist	Progressive / deterministic selection	PEGS	E4
+Expensive Stage-2 processing for all candidates	Adaptive Gate	Gate	E5 optional
+Too few qualified candidates	Progressive Expansion	PEGS	E5 optional
+Relaxation of mandatory criteria	Pool exhaustion rule	PEGS	Policy invariant
+Cannot explain rejection	Evidence Ledger + AuditTrail	Cross-cutting	Audit design
+LLM malformed output	Schema guardrail	Stage 1	Extraction tests
+Prompt injection in resume	Input isolation + schema containment	Stage 1	Security tests
+White-fonting	Only partially addressed currently	Pre-Stage 1 / Stage 1	Future validation needed
+Historical/protected-group bias	Not claimed solved	Outside current core scope	Future fairness study
+Whether EGCA selects better engineers after hiring	Not addressed	Outside current scope	Longitudinal validation
+
+That last section is crucial.
+
+21. What EGCA actually guarantees
+
+Your refined architecture can make strong computational guarantees without pretending to prove hiring effectiveness.
+
+I would express the guarantees like this:
+
+Guarantee G1 — Separation of evidence and claim
+SELF_CLAIMED ≠ ARTIFACT_BACKED
+
+A claim cannot silently become verified merely because the LLM extracted it.
+
+Guarantee G2 — Missing evidence neutrality
+NOT_OBSERVED ≠ NEGATIVE
+
+No public GitHub/portfolio does not automatically mean the candidate lacks the skill.
+
+Guarantee G3 — Policy independence
+P_hard FAIL ⇒ candidate cannot qualify
+
+No M_G component can override the hard policy decision.
+
+Guarantee G4 — Bounded inference
+INFERRED ≠ DIRECT EVIDENCE
+
+Graph-derived evidence remains explicitly labeled.
+
+Guarantee G5 — Uncertainty escalation
+U_unc > threshold ⇒ HUMAN_REVIEW
+
+The system cannot manufacture certainty.
+
+Guarantee G6 — No criteria relaxation
+Pool exhausted ⇒ report insufficiency
+
+not:
+
+relax mandatory criteria
+Guarantee G7 — Auditability
+
+Every material decision has a recorded provenance chain.
+
+These are much more defensible than claiming:
+
+"EGCA eliminates bias."
+
+22. What EGCA does NOT solve
+
+This needs to be a prominent section of the architecture.
+
+Your feasibility report already gives you the correct boundaries.
+
+It does not prove candidate quality
+
+M_G is a ranking heuristic over an evidence construct.
+
+It is not a ground-truth candidate-quality measurement.
+
+It does not prove hiring fairness
+
+A fairness audit across protected characteristics is outside the current project.
+
+It does not prove superiority over human recruiters
+
+There is no recruiter comparison.
+
+It does not prove real-world effectiveness
+
+Your evaluation uses a synthetic dataset.
+
+It does not solve the interview problem
+
+The evidence-based hiring paper you analyzed explicitly discusses problems in technical interviews, but EGCA only governs resume screening.
+
+It does not provide longitudinal validation
+
+You do not have post-hire outcomes.
+
+That is probably the biggest research limitation. The paper you analyzed makes exactly this distinction: evidence-oriented hiring concepts remain much less validated than their motivation suggests.
+
+23. Where GitHub evidence should fit
+
+Your earlier idea of scraping every candidate's social media should not become part of the core architecture.
+
+Your current feasibility specification already has the better boundary:
+
+External Evidence
+       ↓
+Candidate-submitted
+       +
+Consent-based
+
+Then optionally:
+
+Candidate submits GitHub
+       ↓
+GitHub evidence connector
+       ↓
+Artifact analysis
+       ↓
+EvidenceLedger
+       ↓
+ARTIFACT_BACKED
+
+That fits the architecture cleanly.
+
+The GitMeter work discussed in your source material provides a natural precedent for using public GitHub contributions as supplementary experiential evidence, but your own system should still treat that evidence as one provenance source rather than as proof of overall engineering ability.
+
+I would keep LinkedIn/social scraping outside the core project.
+
+24. The most important conceptual refinement
+
+I think the architecture becomes much stronger if you define four different questions:
+
+Q1 — CONTENT
+"What does the candidate's document say?"
+
+        ↓
+
+Q2 — EVIDENCE
+"What evidence supports the claim?"
+
+        ↓
+
+Q3 — POLICY
+"Does the supported claim satisfy mandatory requirements?"
+
+        ↓
+
+Q4 — RANKING
+"Among policy-compliant candidates,
+which candidates should be prioritized?"
+
+And correspondingly:
+
+LLM
+ ↓
+DISCOVER
+ ↓
+EVIDENCE ENGINE
+ ↓
+POLICY ENGINE
+ ↓
+RANKING ENGINE
+ ↓
+HUMAN REVIEW
+
+Notice what disappears:
+
+LLM → FINAL DECISION
+
+That is the architectural separation you were looking for.
+
+25. Final refined architecture in one line
+
+I would describe the whole system as:
+
+EGCA is an evidence-governed, policy-isolated, uncertainty-aware two-stage screening architecture in which semantic matching performs candidate discovery, evidence provenance verifies claims, deterministic policy adjudication enforces mandatory constraints, governed scoring ranks policy-compliant candidates, and progressive selection controls evaluation cost while preserving auditability.
+
+This is much more precise than:
+
+"AI resume screening using semantic similarity."
+
+And it directly builds on the problems identified in your literature review: self-reported claims, keyword brittleness, injection, unexplained decisions, mandatory-requirement overrides, and the broader evidence problem in hiring.
+
+The final stage ownership
+P1 Untrusted Input
+        ↓
+P0 Trust Boundary + Stage 1 Guardrails
+
+P2 Unverifiable Claims
+        ↓
+Stage 2 Evidence Classification + Evidence Ledger
+
+P3 Keyword Brittleness
+        ↓
+Normalization + Semantic Matching + Skill Graph
+
+P4 Unsupported Inference
+        ↓
+Bounded Skill Graph + INFERRED state
+
+P5 Mandatory Requirement Override
+        ↓
+OPA / P_hard
+
+P6 False Certainty
+        ↓
+U_unc + Human Review
+
+P7 Missing Evidence
+        ↓
+NOT_OBSERVED semantics
+
+P8 Opaque Decisions
+        ↓
+AuditTrailLog + ComplianceCertificate
+
+P9 Ranking Instability
+        ↓
+PEGS + deterministic expansion
+        ↓
+E4
+
+P10 Computational Cost
+        ↓
+Adaptive Gate + K' buffer
+        ↓
+E5
+
+P11 Pool Exhaustion
+        ↓
+Progressive Expansion + explicit exhaustion
+
+P12 Bias
+        ↓
+NOT CLAIMED SOLVED
+        ↓
+future fairness study
+
+P13 Real-world effectiveness
+        ↓
+NOT CLAIMED
+        ↓
+future longitudinal validation
+
+That is the refined architecture I would freeze before implementation. It keeps your existing EGCA/PEGS design intact, but makes the security boundary, evidence boundary, policy boundary, ranking boundary, and human-review boundary explicit. Your earlier discussion correctly identified unverifiability as the root weakness; the refinement now shows exactly where that weakness is attacked and where it is deliberately left unresolved.
+
+
+
+Here is the refactored architecture. It applies the fixes from my earlier review, and I've renamed the IDs to avoid the collisions: failure modes are F1–F13, invariants are I1–I7, and phases go by name.
+
+Principle
+
+Five decisions, each owned by exactly one component, and no component decides two of them:
+
+Decision	Owner	May the LLM decide it?
+What was written	Extraction	Yes, discovery only
+What is supported	Evidence connectors + ledger	No
+What is eligible	Policy engine (OPA)	No
+What order	Scorer	No
+What needs a human	Router	No
+Pipeline
+A. INGEST      snapshot → hidden-text check (SUSPECT flag)
+               LLM extraction → CandidateClaim{tech, duration, context, source_span}
+               grounding check: span must exist in snapshot AND contain the tech, else drop
+               claims are capped at SELF_CLAIMED; extraction cannot emit evidence states
+               normalize to graph nodes
+B. STAGE 1     semantic score → preliminary queue (non-governing; tie-break by candidate_id)
+C. GATE        K' = ceil(R / (1 − f)) × margin, f = P_hard failure rate measured on dev split
+               adjusted by score-gap analysis, bounded to [K_min, N]
+D. STAGE 2     per candidate, in cheap-first order:
+   1 evidence connectors → ledger (only source of ARTIFACT_BACKED / ASSESSED)
+   2 policy P_hard (tri-valued): PASS / FAIL / INDETERMINATE
+        FAIL → INELIGIBLE(reason), stop, no scoring
+        INDETERMINATE → NEEDS_REVIEW
+   3 graph inference → INFERRED (depth-limited, never satisfies P_hard)
+   4 score M_G = w_q·Q + w_e·E_prov     (U_unc is not in the score; G_adapt weight = 0 in core runs)
+   5 route: U_unc > τ, SUSPECT, or LLM failure → NEEDS_REVIEW, else QUALIFIED_AUTO
+E. EXPANSION   stop only when |QUALIFIED_AUTO| ≥ R AND top-R is stable across the last two batches
+               otherwise next fixed batch; pool exhausted → insufficiency report + P_hard failure breakdown
+               NEEDS_REVIEW is reported separately and never counts toward R
+AUDIT          cross-cutting; an invariant checker replays I1–I7 over the log on every run
+What changed and why
+Evidence is no longer produced by extraction. Only connectors can assign ARTIFACT_BACKED or ASSESSED. Injected or hallucinated text is therefore capped at SELF_CLAIMED by construction, which is stronger than schema validation. It still contaminates the Stage-1 rank and takes K′ slots, and that cost should be stated openly.
+P_hard became three-valued. A missing mandatory item is INDETERMINATE, not FAIL. This is what keeps NOT_OBSERVED ≠ negative consistent with the hard gate. The default I propose is that SELF_CLAIMED is enough to PASS at screening, since verification is a later hiring stage. NOT_OBSERVED gives INDETERMINATE, and INFERRED never passes. Each requirement can override this default. This is the one design decision you must make yourself.
+U_unc moved out of the score. It now drives routing only, which removes the indirect penalty that violated E2.
+E_prov separates stuffed from honest candidates by claim specificity, not by artifact presence. Specificity means context, duration, and a grounded span. The artifact contribution is capped, so lacking a public profile costs a bounded amount, and E2's ≤5-point bound is then enforced by design.
+Policy runs before scoring. A FAIL exits early, so failed candidates cost no graph or scoring work.
+Expansion has two stopping conditions and a review-aware count. A shortlist cannot reach R through candidates no one has cleared.
+The buffer is derived, not guessed. K′ comes from the measured failure rate.
+The system is deterministic end to end. With a total order and a cached extraction, E4 becomes a bug detector. For a real stability test, use incremental arrival or repeated extraction runs.
+Invariants, all machine-checkable from the audit log
+I1: an SELF_CLAIMED claim never appears as ARTIFACT_BACKED without a connector record.
+I2: NOT_OBSERVED never lowers M_G.
+I3: P_hard FAIL means the candidate is never QUALIFIED_AUTO.
+I4: every INFERRED item carries its graph path and depth.
+I5: U_unc above τ means NEEDS_REVIEW.
+I6: pool exhausted means an insufficiency report, and the policy version is unchanged during the run.
+I7: every state transition has a provenance record.
+Failure mode → owner → how it is measured
+Failure mode	Mechanism	Measured by
+F1 Injected or hidden input	Grounding check, hidden-text flag, SELF_CLAIMED cap	Adversarial injection set
+F2 Unsupported claims	Evidence states and specificity	E1
+F3 Vocabulary brittleness	Normalization and graph	Alias and synonym tests
+F4 Unsupported inference	INFERRED, depth limit	E3
+F5 Requirement override	Policy before scoring	I3
+F6 False certainty	Routing on U_unc	I5, plus review rate
+F7 Missing-data penalty	Tri-valued policy, capped artifact weight	E2
+F8 Opaque decisions	Ledger and audit log	I4, I7
+F9 Order instability	Total order, incremental arrival	E4
+F10 Cost	Gate	Gate versus baselines, at N ≥ 1,000 simulated
+F11 Pool insufficiency	Expansion and exhaustion	I6
+F12 Bias	Not claimed	Future work
+F13 Real-world validity	Not claimed	Future work
+Costs to watch
+Review rate. INDETERMINATE and high U_unc can route many candidates to humans. Report the review rate per profile category, because a high rate for no-profile candidates is itself unequal treatment.
+Ranking disagreement. Because M_G no longer subtracts uncertainty, two candidates with equal scores can differ in confidence. Show confidence next to the rank.
+Gate recall. The gate can drop qualified candidates that Stage 1 ranked low. Measure recall of ground-truth-qualified candidates within K′ and compare against evaluate-all and fixed-percentile baselines.
+
+Do you want to settle the P_hard default in item 2 first? Everything downstream depends on it.
+
+can you explain the whole process in easy to understand manner
+
+Think of EGCA as a hiring office with a strict rule: the person who reads the resume is never the person who decides anything.
+
+The core idea
+
+A resume is a list of things someone says about themselves. Most screening tools treat those statements as facts and score them. EGCA treats them as claims, then checks how much support each claim has, applies the company's mandatory rules separately, and only then ranks people.
+
+Five jobs, each with its own owner:
+
+Job	Who does it
+Read the resume	The AI (reading only)
+Check what's backed by evidence	Evidence checker
+Check mandatory requirements	A separate rule engine
+Put people in order	Scorer
+Decide what a human should look at	Router
+
+The AI never decides who qualifies. It only reads.
+
+The walkthrough
+
+Step 1: Intake. The resume is saved untouched, so there's always an original to point back to. The system also flags tricks like invisible white text.
+
+Step 2: The AI reads it and writes down claims. For example: "Node.js, 3 years, backend work, from the experience section." Each claim must point to the exact spot in the resume. If the quoted text isn't really there, the claim is thrown out. This also limits prompt injection, where someone hides instructions in the resume, because whatever the AI writes is capped at "the candidate says so."
+
+Step 3: Quick first ranking. Every resume gets a cheap, fast similarity score against the job description. This only answers "who looks relevant?" and it decides nothing.
+
+Step 4: The gate. Careful checking is expensive, so we don't do it for everyone. The gate picks the top group to check properly. It picks more than we need, because some will fail the mandatory rules and we want to still have enough left afterward. The extra amount is calculated from how often people fail those rules, not guessed.
+
+Step 5: The careful check. Each forwarded candidate goes through this in order, cheapest step first:
+
+Evidence. Every claim is labeled by how much support exists: nothing known, just says so, inferred from related skills, backed by a real project, or formally assessed. "No evidence found" means we don't know, never they don't have it.
+Mandatory rules (degree required, minimum years, and so on). A separate program checks these, and no high score can buy its way past them. It has three answers: pass, fail, or "can't tell yet." Fail stops everything for that candidate. "Can't tell" goes to a human.
+Skill relationships. Fastify experience earns partial credit toward Express, clearly labeled "inferred," and it can never satisfy a mandatory requirement.
+Score. Candidates who passed get a score from how well they fit and how strong their evidence is. Uncertainty is not subtracted here, so having no public profile doesn't quietly lower anyone's score.
+Route. If the system is too unsure, or the resume looked tampered with, or the AI failed, the case goes to a human instead of getting an automatic answer.
+
+Step 6: Expand if needed. Suppose you need 10 finalists and only 7 cleared. The system never loosens the rules. It pulls the next batch of candidates and repeats. It stops when it has enough cleared candidates and the top 10 stopped changing between batches. If it runs out of applicants, it says so and reports which requirement knocked out the most people. That can reveal that the job posting itself is unrealistic. Cases waiting on a human never count toward the 10.
+
+Step 7: The paper trail. Every step is logged, so any rejection can be explained, and a checker replays the log on every run to confirm the rules were never broken.
+
+What it does not do
+
+It doesn't prove the people it picks are actually good engineers, doesn't prove hiring is fair, and only covers the resume stage, not interviews. Your tests use made-up candidates, so results are about how the system behaves, not about real hiring outcomes.
+
+One open decision
+
+If a resume just says "I have a degree" with no proof, should that count as a pass at this early screening stage? My suggestion is yes, since checking proof is a later hiring step, while a missing mention means "can't tell, ask a human." The rest of the design depends on your answer.
+
+
