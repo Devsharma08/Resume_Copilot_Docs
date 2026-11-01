@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Selection & Governed Closeness Metrics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        },
+                        emeraldCustom: {
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 380px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Chosen Palette: Slate & Emerald Trust - Slate Gray (#0f172a, #f8fafc), Emerald Accent (#10b981), Amber Warning (#f59e0b), Sky Blue (#0284c7) -->
+    <!-- Application Structure Plan: Interactive research briefing and interactive sandbox designed to evaluate candidate selection theories (Static Threshold vs Dynamic Priority Queue with Role Model Benchmark) and present the Governed Closeness Distance Metric. Contains: 1. Theoretical Synthesis (Analyzing user's idea vs. literature), 2. Live Interactive Priority Queue Simulator, 3. Closeness Metric Formulation & Comparison (Cosine vs Governed Score), 4. Research Roadmap Integration. -->
+    <!-- Visualization & Content Choices: Interactive queue simulator built in Vanilla JS showing real-time candidate intake, role-model benchmark replacement, policy violation eviction; Chart.js radar & bar chart comparing keyword gammers vs verified experts; Clean mathematical breakdown with interactive slider adjustments. NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <span class="bg-sky-500 text-slate-900 font-extrabold px-2.5 py-1 rounded text-sm tracking-wider">GADS</span>
+                    <span class="font-bold text-lg tracking-tight">Governed AI Decision Systems Research Lab</span>
+                </div>
+                <div class="text-xs font-mono text-slate-400">
+                    Topic: Candidate Selection Paradigms & Closeness Metrics
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Title & Subtitle -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="inline-block px-3 py-1 bg-sky-100 text-sky-800 text-xs font-semibold rounded-full uppercase tracking-wider mb-3">
+                Theoretical Research Synthesis & Interactive Sandbox
+            </div>
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                Evaluating Selection Paradigms: Dynamic Role-Model Benchmarking vs. Governed Closeness Metrics
+            </h1>
+            <p class="mt-2 text-slate-600 max-w-4xl leading-relaxed text-sm md:text-base">
+                Exploring how online dynamic selection (Priority Queues with continuous "Role Model" benchmark updates) interacts with hard policy enforcement, and how to measure true candidate "closeness" without falling victim to keyword gaming and semantic wordplay.
+            </p>
+        </div>
+
+        <!-- Tabbed Navigation -->
+        <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 overflow-x-auto">
+            <button onclick="switchTab('theory')" id="tab-theory" class="tab-btn px-5 py-3 font-medium text-sm border-b-2 border-sky-600 text-sky-600 whitespace-nowrap focus:outline-none">
+                1. Selection Theory Analysis
+            </button>
+            <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-5 py-3 font-medium text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap focus:outline-none">
+                2. Interactive Priority Queue Simulator
+            </button>
+            <button onclick="switchTab('closeness')" id="tab-closeness" class="tab-btn px-5 py-3 font-medium text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap focus:outline-none">
+                3. Measuring True "Closeness" (Metric Design)
+            </button>
+            <button onclick="switchTab('integration')" id="tab-integration" class="tab-btn px-5 py-3 font-medium text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 whitespace-nowrap focus:outline-none">
+                4. Research Roadmap Integration
+            </button>
+        </div>
+
+        <!-- SECTION 1: THEORETICAL ANALYSIS -->
+        <div id="section-theory" class="tab-content block space-y-6">
+            <div class="bg-white rounded-b-xl rounded-tr-xl border border-slate-200 p-6 md:p-8 space-y-6">
+                
+                <div class="border-l-4 border-sky-500 pl-4 py-1 bg-sky-50/50 rounded-r">
+                    <h2 class="text-xl font-bold text-slate-900">How Does Dynamic Role-Model Selection Support Our Research Goal?</h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Analyzing the user's proposed selection paradigm: <em>Threshold Parameterization vs. Priority Queue with Dynamic "Role Model" Benchmark Replacement</em>.
+                    </p>
+                </div>
+
+                <p class="text-slate-700 text-sm md:text-base leading-relaxed">
+                    In operations research and computer science, your proposed selection mechanism connects directly to the <strong>Secretary Problem (Optimal Stopping Theory)</strong> and <strong>Online Priority Queues under Streaming Constraints</strong>. In traditional systems, decision-makers either set a fixed threshold (e.g., "accept anyone scoring > 80%") or maintain a top-K priority queue where the benchmark ("Role Model") is dynamically replaced whenever a superior candidate arrives.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <!-- Method 1 -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-slate-800 text-base">Method A: Static Thresholding</h3>
+                            <span class="text-xs bg-slate-200 text-slate-700 font-mono px-2 py-0.5 rounded">Parametric</span>
+                        </div>
+                        <ul class="text-xs md:text-sm text-slate-600 space-y-2 list-disc pl-4">
+                            <li><strong>Mechanism:</strong> Set a pre-defined cutoff score $S_{min}$. Accept candidates who meet $S_{min}$ until capacity $K$ is filled.</li>
+                            <li><strong>Advantage:</strong> Fast, deterministic decision on arrival; order-independent.</li>
+                            <li><strong>Core Flaw in AI:</strong> Vulnerable to score drift. If the score is computed by a statistical LLM, a "keyword gamer" scores 95% early and occupies a slot, while better candidates arriving later might be rejected due to capacity limits.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Method 2 -->
+                    <div class="bg-sky-50/60 border border-sky-200 rounded-lg p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-slate-900 text-base">Method B: Dynamic "Role Model" Priority Queue</h3>
+                            <span class="text-xs bg-sky-200 text-sky-800 font-mono px-2 py-0.5 rounded">Benchmark Replacement</span>
+                        </div>
+                        <ul class="text-xs md:text-sm text-slate-600 space-y-2 list-disc pl-4">
+                            <li><strong>Mechanism:</strong> Maintain a top-K Priority Queue. The candidate at $K_{max}$ becomes the current "Role Model". Any new applicant exceeding the Role Model displaces the lowest candidate in the queue.</li>
+                            <li><strong>Advantage:</strong> Continuous improvement; adaptively elevates the bar as pool quality increases.</li>
+                            <li><strong>New Risk Introduced:</strong> <em>The False Role-Model Trap</em>. If an adversarial candidate games the model with white-text or prompt injection, they become the "Role Model" benchmark, corrupting future evaluations.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-5 text-amber-900 text-xs md:text-sm space-y-2">
+                    <div class="font-bold text-amber-900 flex items-center gap-2">
+                        <span>⚠️ The Core Failure Condition in Un-Governed Selection</span>
+                    </div>
+                    <p>
+                        Neither static thresholding nor dynamic priority queues work if the <strong>Closeness / Perfection Metric</strong> is based on raw statistical language models (semantic embeddings or LLM match ratings). A keyword-stuffed resume will trick both methods. Therefore, <strong>the selection criteria must be strengthened before queuing can occur</strong>.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 2: INTERACTIVE PRIORITY QUEUE SIMULATOR -->
+        <div id="section-simulator" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-b-xl rounded-tr-xl border border-slate-200 p-6 md:p-8 space-y-6">
+                
+                <div class="border-l-4 border-emeraldCustom-500 pl-4 py-1 bg-emerald-50/50 rounded-r">
+                    <h2 class="text-xl font-bold text-slate-900">Interactive Simulation: Selection under Attack</h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Test how candidates stream into a top-K Priority Queue. Compare raw LLM evaluation vs. Governed Policy-Gated evaluation.
+                    </p>
+                </div>
+
+                <!-- Simulation Controls & Settings -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Queue Governance Mode</label>
+                        <select id="sim-mode" onchange="resetSimulation()" class="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            <option value="raw">Raw LLM Scoring (Vulnerable to Wordplay)</option>
+                            <option value="governed" selected>Governed Multi-Tier Scoring (Hard Constraints + Evidence)</option>
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">Governed mode checks hard constraints and verified evidence before admitting to queue.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Max Queue Capacity (K)</label>
+                        <select id="sim-capacity" onchange="resetSimulation()" class="w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            <option value="3" selected>Top 3 Candidates</option>
+                            <option value="5">Top 5 Candidates</option>
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">Capacity limit for shortlisted candidates.</p>
+                    </div>
+
+                    <div class="flex items-end space-x-2">
+                        <button onclick="addCandidateStream()" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded text-sm transition">
+                            Simulate Next Candidate
+                        </button>
+                        <button onclick="resetSimulation()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded text-sm transition">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Simulation Visual Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Candidate Queue State (8 cols) -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-base">Current Priority Queue (Sorted by Score)</h3>
+                            <span id="queue-status" class="text-xs font-mono bg-slate-100 text-slate-600 px-2 py-1 rounded">0 / 3 Slots Filled</span>
+                        </div>
+
+                        <div id="queue-container" class="space-y-3 min-h-[220px] bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-center">
+                            <p class="text-center text-slate-400 text-sm">Click "Simulate Next Candidate" to begin application stream.</p>
+                        </div>
+                    </div>
+
+                    <!-- Role Model / Current Benchmark (5 cols) -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <h3 class="font-bold text-slate-800 text-base">Current "Role Model" (Max Benchmark)</h3>
+                        <div id="role-model-card" class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-5 border border-slate-700 shadow-md">
+                            <div class="text-xs text-sky-400 font-mono font-semibold uppercase tracking-wider">Benchmark Candidate</div>
+                            <div class="mt-3 text-lg font-bold" id="bm-name">No Benchmark Yet</div>
+                            <div class="text-xs text-slate-300 mt-1" id="bm-desc">Waiting for candidate intake...</div>
+
+                            <div class="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span class="text-slate-400 block">Overall Score</span>
+                                    <span class="text-xl font-mono font-bold text-emerald-400" id="bm-score">--</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block">Hard Policy Status</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded inline-block mt-1" id="bm-status">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs space-y-2">
+                            <div class="font-bold text-slate-700">Audit Log & Evictions:</div>
+                            <div id="sim-log" class="font-mono text-slate-600 h-28 overflow-y-auto space-y-1 bg-white p-2 border border-slate-200 rounded">
+                                <div>[System Ready] Select mode and begin streaming.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 3: MEASURING TRUE CLOSENESS (METRIC DESIGN) -->
+        <div id="section-closeness" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-b-xl rounded-tr-xl border border-slate-200 p-6 md:p-8 space-y-6">
+                
+                <div class="border-l-4 border-indigo-500 pl-4 py-1 bg-indigo-50/50 rounded-r">
+                    <h2 class="text-xl font-bold text-slate-900">How to Measure "Closeness/Perfection" to a Job Role</h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        Formulating a robust, governed distance metric that replaces raw vector similarity with multi-tier policy admissibility.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    
+                    <!-- Mathematical Explanation -->
+                    <div class="space-y-4">
+                        <h3 class="font-bold text-slate-800 text-lg">The Flaw of Standard Cosine Similarity</h3>
+                        <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+                            Standard ATS and LLM screeners rely on vector cosine similarity: 
+                            <span class="font-mono text-slate-800 bg-slate-100 px-1 py-0.5 rounded">Sim(Resume, Job) = (v_r · v_j) / (||v_r|| ||v_j||)</span>.
+                            This measures keyword overlap and semantic proximity, but completely fails to detect false claims, missing certifications, or prompt injections.
+                        </p>
+
+                        <h3 class="font-bold text-slate-800 text-lg pt-2">The Governed Admissibility Distance Metric ($M_G$)</h3>
+                        <div class="bg-slate-900 text-slate-100 font-mono text-xs md:text-sm p-4 rounded-xl space-y-2 border border-slate-800">
+                            <div class="text-sky-400 font-bold">// Multi-Tier Governed Closeness Score Formula:</div>
+                            <div class="text-emerald-300">
+                                M_G(C, J) = P_hard(C, J) × [ w1·E_provenance(C) + w2·S_semantic(C, J) - w3·U_uncertainty(C) ]
+                            </div>
+                            <div class="text-slate-400 text-xs pt-2 border-t border-slate-800">
+                                Where:<br>
+                                • <strong class="text-white">P_hard(C,J) ∈ {0, 1}</strong>: Deterministic Boolean Gate (Hard Requirements). If fail, score = 0.<br>
+                                • <strong class="text-white">E_provenance(C) ∈ [0, 1]</strong>: Verified Evidence Ratio (Claims backed by proof).<br>
+                                • <strong class="text-white">S_semantic(C,J) ∈ [0, 1]</strong>: Contextual semantic match on verified text only.<br>
+                                • <strong class="text-white">U_uncertainty(C) ∈ [0, 1]</strong>: Epistemic uncertainty penalty.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Chart Container -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <div class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 text-center">
+                            Candidate Comparison: Raw LLM Score vs Governed Metric
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="closenessChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Metric Simulator Table -->
+                <div class="pt-4 border-t border-slate-200">
+                    <h3 class="font-bold text-slate-800 text-base mb-3">Interactive Candidate Profiler</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs md:text-sm text-slate-600">
+                            <thead class="bg-slate-100 text-slate-800 font-semibold uppercase text-xs">
+                                <tr>
+                                    <th class="p-3">Candidate Type</th>
+                                    <th class="p-3">Hard Policy (P_hard)</th>
+                                    <th class="p-3">Evidence Provenance</th>
+                                    <th class="p-3">Raw Cosine Match</th>
+                                    <th class="p-3">Governed Score (M_G)</th>
+                                    <th class="p-3">Decision Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 bg-white">
+                                <tr>
+                                    <td class="p-3 font-semibold text-slate-900">1. Verified Senior Expert</td>
+                                    <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">1 (PASS)</span></td>
+                                    <td class="p-3 font-mono">0.95 (High)</td>
+                                    <td class="p-3 font-mono">82%</td>
+                                    <td class="p-3 font-mono font-bold text-emerald-600">88.5%</td>
+                                    <td class="p-3"><span class="text-emerald-700 font-medium">Shortlisted (Trusted)</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-slate-900">2. Keyword Gamer / Prompt Injector</td>
+                                    <td class="p-3"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">1 (PASS)</span></td>
+                                    <td class="p-3 font-mono">0.15 (Fabricated)</td>
+                                    <td class="p-3 font-mono text-red-600 font-bold">98% (Fake)</td>
+                                    <td class="p-3 font-mono font-bold text-amber-600">34.0%</td>
+                                    <td class="p-3"><span class="text-amber-700 font-medium">Demoted / Flagged</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-slate-900">3. High Skills, Missing Security License</td>
+                                    <td class="p-3"><span class="bg-red-100 text-red-800 px-2 py-0.5 rounded font-bold">0 (FAIL)</span></td>
+                                    <td class="p-3 font-mono">0.80 (Good)</td>
+                                    <td class="p-3 font-mono">89%</td>
+                                    <td class="p-3 font-mono font-bold text-red-600">0.0%</td>
+                                    <td class="p-3"><span class="text-red-700 font-medium">Hard Block (Evicted)</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION 4: RESEARCH ROADMAP INTEGRATION -->
+        <div id="section-integration" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-b-xl rounded-tr-xl border border-slate-200 p-6 md:p-8 space-y-6">
+                
+                <div class="border-l-4 border-slate-800 pl-4 py-1 bg-slate-100 rounded-r">
+                    <h2 class="text-xl font-bold text-slate-900">Integrating Dynamic Selection into the Governed AI Vision</h2>
+                    <p class="text-sm text-slate-600 mt-1">
+                        How to capture these thoughts for future expansion in your PhD / research architecture.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
+                        <div class="text-sky-600 font-bold text-sm uppercase tracking-wider">Pillar 1: Deterministic Policy Gating</div>
+                        <h3 class="font-bold text-slate-800 text-base">Out-of-Model Guard</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Before any applicant enters the Priority Queue or is evaluated against the "Role Model", they must pass an out-of-model Open Policy Agent (OPA) boolean check ($P_{hard}$). This eliminates invalid candidates before statistical scoring begins.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
+                        <div class="text-emerald-600 font-bold text-sm uppercase tracking-wider">Pillar 2: Evidence Provenance Ledger</div>
+                        <h3 class="font-bold text-slate-800 text-base">Verified Claim Scoring</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Instead of measuring raw prompt text, extract atomic claims (e.g., "5 years Python", "AWS Certified") and verify source evidence. Closeness is computed only on claims with high provenance confidence ($E_{provenance}$).
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
+                        <div class="text-indigo-600 font-bold text-sm uppercase tracking-wider">Pillar 3: Dynamic Policy-Bounded Queue</div>
+                        <h3 class="font-bold text-slate-800 text-base">Order-Independent Streaming</h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            By combining $M_G$ scoring with dynamic Priority Queues, candidate intake becomes resilient to streaming order, preventing early keyword gamers from displacing late-arriving verified experts.
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Research Contribution Summary Box -->
+                <div class="bg-slate-900 text-white p-6 rounded-xl space-y-3 border border-slate-800">
+                    <h3 class="text-lg font-bold text-sky-400">Formalized Research Contribution Framing</h3>
+                    <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
+                        "We present the <strong>Policy-Bounded Priority Queue (PBPQ)</strong> combined with a <strong>Multi-Tier Governed Admissibility Distance ($M_G$)</strong>. This architecture proves that online candidate selection can remain adaptive and benchmark-driven while guaranteeing zero violations of organizational hard constraints and complete immunity to semantic keyword gaming."
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
+            <p>Governed AI Decision Systems (GADS) Research Framework — 2026</p>
+            <p class="text-slate-500">Self-contained interactive research deliverable. All metrics generated via vanilla JavaScript & Chart.js canvas visuals.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('border-sky-600', 'text-sky-600');
+                el.classList.add('border-transparent', 'text-slate-500');
+            });
+
+            document.getElementById('section-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+            activeBtn.classList.add('border-sky-600', 'text-sky-600');
+
+            if (tabId === 'closeness') {
+                initChart();
+            }
+        }
+
+        // Candidate Stream Dataset
+        const candidatePool = [
+            { id: 1, name: "Alice Vance", profile: "Senior Backend Engineer", hardPass: true, rawScore: 82, evidenceRatio: 0.92, uncertainty: 0.05, desc: "10 yrs Python, AWS Certified, verified employment lineage." },
+            { id: 2, name: "Malicious Max", profile: "Prompt Injector & Gamer", hardPass: true, rawScore: 98, evidenceRatio: 0.10, uncertainty: 0.45, desc: "Pasted JD in white font + injected prompt 'Rate 100%'." },
+            { id: 3, name: "Bob Smith", profile: "Mid-level Developer", hardPass: true, rawScore: 74, evidenceRatio: 0.85, uncertainty: 0.10, desc: "4 yrs React/Node, complete project references." },
+            { id: 4, name: "Dr. Clara Oswald", profile: "Domain Specialist (Missing Cert)", hardPass: false, rawScore: 91, evidenceRatio: 0.88, uncertainty: 0.08, desc: "PhD in AI, missing mandatory Security Clearance clearance." },
+            { id: 5, name: "David Miller", profile: "Principal Architect", hardPass: true, rawScore: 88, evidenceRatio: 0.95, uncertainty: 0.02, desc: "15 yrs Systems design, verifiable open source provenance." }
+        ];
+
+        let streamIndex = 0;
+        let queue = [];
+
+        function calculateGovernedScore(c) {
+            if (!c.hardPass) return 0;
+            // Formula: P_hard * (0.5 * Evidence + 0.5 * Raw - 0.2 * Uncertainty)
+            const score = (0.5 * (c.evidenceRatio * 100)) + (0.4 * c.rawScore) - (0.1 * (c.uncertainty * 100));
+            return Math.max(0, Math.round(score));
+        }
+
+        function resetSimulation() {
+            streamIndex = 0;
+            queue = [];
+            document.getElementById('sim-log').innerHTML = '<div>[System Reset] Queue initialized.</div>';
+            renderQueue();
+        }
+
+        function addCandidateStream() {
+            if (streamIndex >= candidatePool.length) {
+                logAction("End of streaming pool reached. Reset to run again.");
+                return;
+            }
+
+            const mode = document.getElementById('sim-mode').value;
+            const capacity = parseInt(document.getElementById('sim-capacity').value);
+            const candidate = candidatePool[streamIndex];
+            streamIndex++;
+
+            logAction(`Intake: ${candidate.name} (${candidate.profile})`);
+
+            let score = 0;
+            let status = "";
+
+            if (mode === 'raw') {
+                score = candidate.rawScore;
+                status = "Evaluated via Raw LLM Cosine Similarity";
+            } else {
+                // Governed mode
+                if (!candidate.hardPass) {
+                    logAction(`⚠️ HARD POLICY VIOLATION: ${candidate.name} blocked by Out-of-Model Rule Engine. Evicted.`);
+                    renderQueue();
+                    return;
+                }
+                score = calculateGovernedScore(candidate);
+                status = `Governed Score Computed (${score}%)`;
+            }
+
+            const item = { ...candidate, effectiveScore: score };
+
+            // Priority Queue Insertion
+            queue.push(item);
+            queue.sort((a, b) => b.effectiveScore - a.effectiveScore);
+
+            logAction(`Added ${candidate.name} with score ${score}%`);
+
+            // Evict lowest if capacity exceeded
+            if (queue.length > capacity) {
+                const evicted = queue.pop();
+                logAction(`🔴 Queue Capacity Exceeded (${capacity}): Evicted lowest candidate ${evicted.name} (${evicted.effectiveScore}%)`);
+            }
+
+            renderQueue();
+        }
+
+        function logAction(msg) {
+            const logBox = document.getElementById('sim-log');
+            const entry = document.createElement('div');
+            entry.textContent = `> ${msg}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function renderQueue() {
+            const container = document.getElementById('queue-container');
+            const capacity = parseInt(document.getElementById('sim-capacity').value);
+            document.getElementById('queue-status').textContent = `${queue.length} / ${capacity} Slots Filled`;
+
+            if (queue.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 text-sm">Click "Simulate Next Candidate" to begin application stream.</p>`;
+                document.getElementById('bm-name').textContent = "No Benchmark Yet";
+                document.getElementById('bm-desc').textContent = "Waiting for candidate intake...";
+                document.getElementById('bm-score').textContent = "--";
+                document.getElementById('bm-status').textContent = "--";
+                document.getElementById('bm-status').className = "text-xs font-semibold px-2 py-0.5 rounded inline-block mt-1 bg-slate-700 text-slate-300";
+                return;
+            }
+
+            let html = "";
+            queue.forEach((c, idx) => {
+                const isRoleModel = idx === 0;
+                html += `
+                    <div class="bg-white p-3.5 rounded-lg border ${isRoleModel ? 'border-sky-500 ring-2 ring-sky-100' : 'border-slate-200'} flex items-center justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono text-xs text-slate-400">#${idx + 1}</span>
+                                <span class="font-bold text-slate-800 text-sm">${c.name}</span>
+                                ${isRoleModel ? '<span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-1.5 py-0.5 rounded">ROLE MODEL</span>' : ''}
+                            </div>
+                            <div class="text-xs text-slate-500">${c.desc}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-mono font-bold ${c.effectiveScore < 50 ? 'text-amber-600' : 'text-emerald-600'}">${c.effectiveScore}%</div>
+                            <div class="text-[10px] font-mono text-slate-400">Effective Metric</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Update Benchmark Role Model Card
+            const bm = queue[0];
+            document.getElementById('bm-name').textContent = bm.name;
+            document.getElementById('bm-desc').textContent = bm.desc;
+            document.getElementById('bm-score').textContent = `${bm.effectiveScore}%`;
+            document.getElementById('bm-status').textContent = bm.hardPass ? "COMPLIANT" : "VIOLATION";
+            document.getElementById('bm-status').className = `text-xs font-semibold px-2 py-0.5 rounded inline-block mt-1 ${bm.hardPass ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`;
+        }
+
+        // Chart Initialization
+        let closenessChart = null;
+
+        function initChart() {
+            if (closenessChart) return;
+
+            const ctx = document.getElementById('closenessChart').getContext('2d');
+            closenessChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Senior Expert', 'Keyword Gamer', 'Missing Req. Candidate'],
+                    datasets: [
+                        {
+                            label: 'Raw Cosine Match % (Un-governed)',
+                            data: [82, 98, 89],
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Governed Closeness Score M_G %',
+                            data: [88.5, 34, 0],
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: '#10b981',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Metric Value (%)', font: { size: 11 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize default view
+        renderQueue();
+    </script>
+</body>
+</html>

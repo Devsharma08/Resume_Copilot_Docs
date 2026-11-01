@@ -1,0 +1,114 @@
+okay can you give me list of research paper for resume screening paper,resume screening with help of ai,guardrails on resume screening system,some thing like evidence governed screening system
+
+Fetched: https://arxiv.org/pdf/2504.06387
+Fetched: https://arxiv.org/pdf/2504.06387
+Good. I have the complete paper. Now let me give you the detailed honest breakdown — what it says, what your points about it are correct on, and where your architecture directly addresses or could improve on what this paper describes.
+
+Complete Summary — Towards Evidence-Based Tech Hiring Pipelines
+Authors: Chris Brown and Swanand Vaishampayan, Virginia Tech
+Published: 2025, ACM (conference paper)
+Type: Vision paper — it does not build or test a complete system. It identifies problems and proposes research directions.
+
+What the Paper Is and What It Is Not
+This is a position and vision paper, not an empirical study. The authors are not reporting experimental results from a deployed system. They are surveying what is broken in current tech hiring pipelines and proposing research directions to fix it. That distinction matters for how you cite it — it is a motivation paper, not a validation paper.
+
+The authors frame everything through a CDC evidence-based decision-making framework that classifies evidence into three types: contextual evidence (does the candidate fit this specific role and team?), experiential evidence (what have they actually built and done?), and research-based evidence (are hiring practices grounded in empirical findings?). They argue all three types are currently absent from tech hiring.
+
+Section by Section — What It Actually Says
+The Core Argument
+
+The paper opens with a direct statement that current tech hiring pipelines fail on both sides of the relationship. For candidates, they are biased, stressful, irrelevant to real work, and lack transparency. For employers, they select for interview preparation skills rather than engineering capability, produce false positives (hired candidates who cannot actually do the job) and false negatives (rejected candidates who would have succeeded), and cost roughly $22,750 per hire when accounting for hidden costs.
+
+The paper's thesis is simple: replace intuition-based hiring with evidence-based hiring — specifically, require that every hiring decision be grounded in verifiable data about what a candidate has actually done, not what they claim or how they perform under artificial conditions.
+
+On Resume Matching — Contextual and Experiential Failures
+
+The paper identifies several specific failures in resume matching that map directly onto your project.
+
+The length problem is structural: the one-to-two page resume convention was designed for human readers but actively suppresses the contextual information an AI system could actually use. Candidates omit relevant experience to fit the format. The paper suggests that since AI can parse long documents, the industry should move toward longer, richer profiles rather than enforcing an arbitrary length limit that made sense in a pre-digital era.
+
+The keyword brittleness problem is exactly what your semantic matching addresses: a candidate who writes "JavaScript" may be rejected by a system searching for "JS" even though they are identical. Beyond synonyms, the paper cites research showing candidates are often competent in a language they did not list simply because they did not think to mention it.
+
+The fraud and injection problem you identified is documented here with specifics. Around 40% of candidates lie on their resumes according to Indeed's data cited in the paper. White fonting — writing keywords in white text invisible to humans but visible to automated parsers — is documented as a real practice currently being used. The paper also cites Inject My PDF directly, a tool that embeds invisible prompts into PDF resumes to manipulate LLM-based screening systems. This is prompt injection at the document layer, not the prompt layer, and it specifically targets systems that trust the resume PDF as a clean evidence source.
+
+The paper's proposed solution is GitMeter, a tool the same research group built (Vaishampayan et al., 2025, published at SANER). GitMeter extracts GitHub profile links from resumes and automatically analyses candidates' public code contributions to supplement resume content. This is the prototype you noted. It is described as a formative exploratory study with limited implementation guidance and no replication — meaning it exists but has not been rigorously validated.
+
+On Technical Interviews — Why They Fail
+
+The Max Howell example you mentioned appears directly in the paper: the creator of Homebrew, used by over 90% of Google engineers, failed his Google interview because he could not invert a binary tree on a whiteboard. The paper uses this to illustrate the gap between what interviews test (memorised algorithmic patterns under observation stress) and what predicts actual engineering contribution (the ability to build and maintain real software systems over time).
+
+The paper documents three distinct failure modes in technical interviews. First, the assessment context is wrong — solving LeetCode problems on a whiteboard or in Google Docs without access to compilers, IDEs, or documentation does not reflect how engineers actually work. Second, the performative stress of solving problems in front of an audience significantly reduces performance — Behroozi et al.'s study shows candidates perform significantly better in private settings without an interviewer present. Third, the questions themselves are wrong — they test data structures and algorithms knowledge that most working engineers never use and that candidates specifically grind for months without developing real engineering skills.
+
+The paper's proposed solutions include asynchronous technical interviews (screencasts submitted without a live audience), allowing IDE use during interviews, scenario-based questions grounded in real engineering constraints, and pair programming with an interviewer to observe collaboration rather than memorisation.
+
+On Google's False Negative Rate
+
+The Steve Yegge quote you flagged is in the paper: a former Google senior staff engineer explicitly states that Google has a high intentional false negative rate because the company considers rejecting qualified candidates to be preferable to hiring unqualified ones. The paper frames this as a cultural problem specific to large tech companies, where interview difficulty has become a form of brand signalling rather than a functional selection mechanism. The consequence is that many qualified candidates are systematically excluded for reasons unrelated to their ability to contribute to software projects.
+
+On Performance Assessment After Hiring — The Meta Layoff Point
+
+The paper extends beyond hiring into a broader argument about evidence throughout the engineering lifecycle. It cites the Meta layoff example you mentioned: Meta described its 2025 layoffs as performance-based, but the paper notes there is no publicly defined threshold for what constitutes "low performance," and multiple affected employees reported being laid off during or after parental leave rather than for demonstrable performance failures. The paper uses this to argue that the absence of evidence-based performance standards is not just a hiring problem — it is a systemic problem in how the industry evaluates engineering contribution at every stage.
+
+The Stanford ghost engineer study is also cited, and the paper immediately notes that it has been shown to lack evidence to support its methodology, demonstrating the paper's own commitment to evidence standards.
+
+On AI Bias — What It Documents
+
+The paper documents multiple specific forms of bias in AI hiring:
+
+Amazon's resume screening system that had to be shut down because it consistently downgraded resumes from women, having been trained on historical hiring data that reflected past bias. GPT-based resume screening that provides higher ratings to resumes with White-sounding names compared to identical content with names associated with other racial groups (Armstrong et al., 2024). Disability bias in GPT resume screening (Glazko et al., 2024, the paper you have in your reading list). Interview bias against candidates from minority backgrounds, specifically favouring those with more time and money to prepare — which correlates with socioeconomic background rather than engineering capability.
+
+The paper frames all of this as a consequence of training AI systems on historical hiring data that encodes historical bias. A system trained on past hiring decisions inherits the biases of whoever made those decisions.
+
+The Continuum of Evidence Framework
+
+This is the most theoretically important section of the paper. The CDC's Continuum of Evidence of Effectiveness ranks evidence quality from "unsupported" to "well-supported" based on how rigorously the evidence was collected and validated. The paper applies this framework to the entire tech hiring research literature and concludes that most existing work — including their own GitMeter and asynchronous interview studies — sits at the "promising/emerging/undetermined" level. It has not been tested in real-world hiring contexts with longitudinal outcome data, adequate sample sizes, or independent replication.
+
+This is the paper being honest about its own limitations. They are not claiming to have solved the problem. They are describing what a rigorous solution would need to look like.
+
+Your Five Points — What the Paper Actually Says on Each
+Experiential evidence and the need to go beyond resumes — correct and central. The entire paper is structured around the argument that resumes provide self-reported claims without verifiable evidence, and that experiential signals from what candidates have actually built are categorically stronger evidence.
+
+White fonting and Inject My PDF — both documented in the paper with specific citations. White fonting is cited from CNBC coverage. Inject My PDF is cited from the Greshake et al. 2023 paper on compromising LLM-integrated applications with indirect prompt injection. This is exactly the attack vector your Stage 1 guardrail addresses.
+
+Google's high false negative rate — documented with the Yegge quote, framed as intentional policy, and critiqued as signalling behaviour rather than functional selection.
+
+Bias in AI based on training data — documented extensively across multiple studies. The mechanism the paper describes is precisely what you identified: models trained on historical hiring decisions encode historical human bias as a learned pattern.
+
+Performance definition problem and the Meta layoffs — documented in Section 4.4 specifically. The paper argues this is an evidence problem: there is no defined, measurable threshold for what performance means, so performance-based decisions end up being arbitrary.
+
+GitMeter prototype using public GitHub — this is Vaishampayan et al. 2025 at SANER, the same first author as this paper. The paper describes it as a tool that extracts GitHub links from resumes and analyses code contributions. It is described as exploratory and not yet validated in real hiring contexts.
+
+Where Your Architecture Directly Addresses What This Paper Describes
+The paper identifies problems. Your architecture proposes specific mechanisms that address each one.
+
+The prompt injection problem — white fonting and Inject My PDF — your Stage 1 guardrail handles this: extraction output is validated against a fixed Pydantic schema, and any claim the LLM returns outside that schema is dropped and logged rather than propagated. More importantly, your design principle that the extraction output cannot modify the extraction prompt means the injection attack vector is structurally closed.
+
+The self-reported claims problem — your five-state evidence classification (NOT_OBSERVED, SELF_CLAIMED, INFERRED, ARTIFACT_BACKED, ASSESSED) directly formalises the distinction the paper makes informally between things candidates say and things that are verifiable. The paper gestures at GitMeter as a solution. Your architecture provides the formal evidence framework into which GitMeter's output could slot as an ARTIFACT_BACKED signal.
+
+The keyword brittleness problem — your Skill Knowledge Graph handles this structurally. ALIAS_OF relations between "JavaScript" and "JS" mean semantic equivalences are encoded in the graph rather than depending on exact string match. TRANSFERABLE_TO relations handle the adjacent technology problem the paper describes (someone competent in one language being excluded because they did not list the specific language in the job description).
+
+The unexplainability problem — your AuditTrailLog records the complete chain of reasoning for every decision. The paper cites candidate research showing people distrust AI screening specifically because they cannot understand why they were rejected. An audit trail that shows exactly which claim was evaluated, what evidence state it was assigned, and which rule it failed gives a rejected candidate (or a recruiter reviewing the decision) a complete explanation.
+
+The mandatory requirement override problem — your P_hard gate is the exact structural solution. The paper does not propose this specifically, but it documents the failure mode: high AI scores overriding mandatory requirements. Your OPA rule engine operates outside the LLM and cannot be overridden by a score.
+
+Where the Paper Points to Something Your Architecture Has Not Addressed
+The paper's most important unanswered question for your project is about longitudinal validation. GitMeter and the evidence-based approach the paper advocates have not been tested against real hiring outcomes. Neither has your system. The paper explicitly acknowledges this gap and describes what rigorous validation would require: candidates' scores, the job description, the outcome of the hiring process, employer and candidate perceptions, and longitudinal contribution data after joining a team.
+
+Your synthetic dataset addresses the short-term evaluation questions (does the system resist keyword stuffing, does it handle NOT_OBSERVED fairly). But the paper's framework implies the deeper question your paper cannot answer is whether evidence-governed screening actually selects better engineers. You cannot answer that without post-hire outcome data. Your paper's limitations section needs to say this explicitly, and the paper you just read gives you the exact framework and vocabulary to say it precisely — place your work on the Continuum of Evidence of Effectiveness at the "promising/emerging" level, which is honest and defensible.
+
+The second thing the paper surfaces that your architecture has not addressed is the interview stage. EGCA only touches resume screening. The paper argues that even a perfectly governed resume screening stage followed by a broken interview stage produces poor overall hiring outcomes. That is outside your scope but it is the correct observation — your paper should acknowledge that EGCA governs one stage of a multi-stage pipeline and does not claim to fix the pipeline as a whole.
+
+One Concrete Idea the Paper Opens That Could Extend Your Architecture
+The GitMeter work by the same authors (Vaishampayan et al. 2025, SANER) is the prototype most directly connected to your G_adapt component. GitMeter extracts GitHub links from resumes and analyses public code contributions. In your current design, G_adapt is simulated in the synthetic dataset because real behavioral signals are marked as optional scope.
+
+What the combination of this paper and GitMeter suggests is a specific, scoped integration: if a candidate provides a GitHub URL in their resume or application, your Stage 1 extraction pipeline could call a lightweight version of GitMeter's analysis — specifically extracting technology adoption timeline (what languages and frameworks appear in commits, in what order, over what time period) and repository topic diversity. The output maps directly onto your evidence states: a commit history showing React contributions to a public repository becomes ARTIFACT_BACKED evidence for React experience. A pattern of adopting new frameworks in each successive project becomes an ARTIFACT_BACKED signal for G_adapt rather than a simulated one.
+
+This is achievable using the GitHub public API with candidate consent, within the optional scope you already defined for Week 7. The paper gives you the motivation and the prior work gives you a precedent for what the analysis should look like.
+
+from this whole chat can you tell me in one word what problems does current resume screening architecture encounters from very start to the end
+
+Unverifiability.
+
+Everything else — keyword gaming, prompt injection, bias, unexplainable rejections, mandatory requirement overrides, white fonting, false negatives, score instability — is a symptom of the same root condition: the system has no way to verify whether anything it is reading is true.
+
+now can we get a more refined architecture where our system,methods solves this issues with explicitly mentioning which of out stage/phase/hypothisis is going to solving which issues and get to a more refined architechture.

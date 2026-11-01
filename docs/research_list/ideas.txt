@@ -1,0 +1,588 @@
+Research Landscape
+
+The resume screening pipeline has many stages, and each stage has open research questions.
+
+Resume PDF
+     │
+     ▼
+Document Parsing
+     │
+     ▼
+Information Extraction
+     │
+     ▼
+Skill Normalization
+     │
+     ▼
+Embedding Generation
+     │
+     ▼
+Job Description Understanding
+     │
+     ▼
+Semantic Matching
+     │
+     ▼
+Candidate Ranking
+     │
+     ▼
+Explainability
+     │
+     ▼
+Bias & Fairness
+     │
+     ▼
+Recruiter Feedback
+
+Every block above is a potential research area.
+
+1. Resume Parsing Accuracy
+
+Difficulty: ⭐⭐☆☆☆ (Easy)
+
+Problem
+
+Different resume formats break parsers.
+
+Example
+
+Two resumes contain identical information.
+
+One is
+
+Experience
+
+Software Engineer
+
+Another is
+
+Professional Journey
+
+Most parsers struggle.
+
+Research Question
+
+Which parser extracts structured information most accurately?
+
+Compare
+
+PyMuPDF
+Docling
+OCR
+GPT-5
+Claude
+Gemini
+
+Evaluate
+
+precision
+recall
+extraction accuracy
+latency
+Potential Contribution
+
+Create a benchmark dataset.
+
+This alone can become a paper.
+
+Example Title
+
+Benchmarking Resume Parsing Pipelines for Large Language Models
+
+2. Hallucination During Resume Parsing
+
+Difficulty ⭐⭐⭐☆☆
+
+Problem
+
+LLMs sometimes invent information.
+
+Example
+
+Resume
+
+React
+
+Node
+
+LLM outputs
+
+React
+
+Node
+
+Docker
+
+Docker never existed.
+
+Research Question
+
+How often do different models hallucinate?
+
+Compare
+
+Claude
+
+GPT
+
+Gemini
+
+Llama
+
+Qwen
+
+DeepSeek
+
+Measure
+
+Hallucination Rate
+
+Factual Consistency
+
+Confidence
+
+Potential Impact
+
+Huge.
+
+Recruiters shouldn't reject candidates because an AI fabricated information.
+
+3. Semantic Skill Extraction
+
+Difficulty ⭐⭐⭐☆☆
+
+Traditional ATS
+
+NodeJS
+
+Modern Resume
+
+Developed REST APIs using Express.
+
+Can AI infer
+
+Backend Development
+
+REST
+
+Node.js
+
+Research Question
+
+How well do LLMs infer implicit skills?
+
+Potential Evaluation
+
+Human annotations
+
+Precision
+
+Recall
+
+F1
+
+4. ATS Scoring Consistency
+
+Difficulty ⭐⭐⭐☆☆
+
+Very practical.
+
+Give
+
+100 resumes
+
+Run
+
+Claude
+
+GPT
+
+Gemini
+
+Measure
+
+Ranking Stability
+
+Example
+
+Candidate A
+
+GPT Rank
+
+3
+
+Claude Rank
+
+18
+
+Gemini Rank
+
+6
+
+Why?
+
+Research Question
+
+Are LLM-generated rankings reproducible?
+
+5. Explainable ATS
+
+Difficulty ⭐⭐⭐⭐☆
+
+Probably my favorite.
+
+Instead of
+
+Score
+
+72%
+
+System explains
+
+Strong backend experience.
+
+Missing Docker.
+
+Strong React skills.
+
+Internship relevant.
+
+Projects highly aligned.
+
+Research
+
+Can explanations improve recruiter trust?
+
+Metrics
+
+Explanation Quality
+
+Human Satisfaction
+
+Trust Score
+
+6. Embedding Models for Resume Matching
+
+Difficulty ⭐⭐⭐⭐☆
+
+Instead of keywords
+
+Compare embeddings
+
+OpenAI
+
+Voyage
+
+BGE
+
+E5
+
+Nomic
+
+Jina
+
+Evaluate
+
+Retrieval Accuracy
+
+Top-K Recall
+
+Latency
+
+Cost
+
+Very publishable.
+
+7. Agentic Resume Screening
+
+Difficulty ⭐⭐⭐⭐⭐
+
+Instead of one prompt
+
+Create multiple agents.
+
+Resume Agent
+
+↓
+
+Skill Agent
+
+↓
+
+Experience Agent
+
+↓
+
+Project Agent
+
+↓
+
+Risk Agent
+
+↓
+
+Final Decision Agent
+
+Compare
+
+Single Prompt
+
+vs
+
+Agentic Workflow
+
+Research Question
+
+Do agentic systems produce better hiring decisions?
+
+8. Bias Detection
+
+Difficulty ⭐⭐⭐⭐⭐
+
+Remove
+
+Name
+
+Gender
+
+University
+
+Location
+
+Does ranking change?
+
+Research
+
+Bias
+
+Fairness
+
+Protected attributes
+
+Very hot topic.
+
+9. Cost vs Accuracy
+
+Difficulty ⭐⭐⭐☆☆
+
+Question
+
+Do you really need GPT-5?
+
+Compare
+
+Claude
+
+GPT
+
+Gemini
+
+Llama
+
+Qwen
+
+DeepSeek
+
+Metrics
+
+Accuracy
+
+Latency
+
+Price
+
+Memory
+
+Energy
+
+Very useful for startups.
+
+10. RAG for Resume Screening
+
+Difficulty ⭐⭐⭐⭐☆
+
+Instead of asking LLM directly
+
+Retrieve
+
+Company Hiring Guidelines
+
+↓
+
+Recruitment Policies
+
+↓
+
+Past Hiring Decisions
+
+↓
+
+Resume
+
+↓
+
+LLM
+
+Measure
+
+Decision consistency
+
+11. Multimodal Resume Parsing
+
+Difficulty ⭐⭐⭐⭐☆
+
+Many resumes contain
+
+Icons
+
+Tables
+
+Timelines
+
+Charts
+
+Photos
+
+Question
+
+Which model understands visual resumes best?
+
+12. Prompt Engineering Benchmark
+
+Difficulty ⭐⭐☆☆☆
+
+One dataset
+
+100 resumes
+
+Prompt A
+
+Prompt B
+
+Prompt C
+
+Prompt D
+
+Measure
+
+Accuracy
+
+Hallucination
+
+Latency
+
+Extremely practical.
+
+13. Human vs AI Recruiter
+
+Difficulty ⭐⭐⭐⭐⭐
+
+Give
+
+Recruiters
+
+and
+
+LLMs
+
+same resumes.
+
+Measure
+
+Agreement
+
+Speed
+
+Consistency
+
+This is conference-level work if done well.
+
+14. AI Confidence Calibration
+
+Difficulty ⭐⭐⭐⭐⭐
+
+Question
+
+If AI says
+
+95% confidence
+
+Is it actually correct 95% of the time?
+
+Calibration research is very active.
+
+15. Responsible AI for Hiring
+
+Difficulty ⭐⭐⭐⭐⭐
+
+Research
+
+Explainability
+
+Transparency
+
+Audit Logs
+
+Fairness
+
+Appeals
+
+Human-in-the-loop
+
+My Top Recommendations for You
+
+Considering your skills and current projects, I think these are the strongest options:
+
+Topic	Difficulty	Publication Potential	Industry Relevance
+Hallucination in Resume Parsing	⭐⭐⭐	⭐⭐⭐⭐⭐	⭐⭐⭐⭐⭐
+Explainable ATS Scoring	⭐⭐⭐⭐	⭐⭐⭐⭐⭐	⭐⭐⭐⭐⭐
+Agentic Resume Screening	⭐⭐⭐⭐⭐	⭐⭐⭐⭐⭐	⭐⭐⭐⭐⭐
+Resume Embedding Benchmark	⭐⭐⭐⭐	⭐⭐⭐⭐	⭐⭐⭐⭐⭐
+Cost vs Accuracy of LLM Hiring Pipelines	⭐⭐⭐	⭐⭐⭐⭐	⭐⭐⭐⭐⭐
+ATS Ranking Consistency	⭐⭐⭐	⭐⭐⭐⭐⭐	⭐⭐⭐⭐
+Prompt Engineering for Resume Parsing	⭐⭐	⭐⭐⭐	⭐⭐⭐⭐
+Human vs AI Recruiter Benchmark	⭐⭐⭐⭐⭐	⭐⭐⭐⭐⭐	⭐⭐⭐⭐⭐
+Papers and reports worth reading
+
+Rather than a random list, I'd group them by theme.
+
+Resume Parsing & Information Extraction
+Resume Information Extraction with Named Entity Recognition (various academic implementations on arXiv)
+GROBID papers (document structure extraction)
+LayoutLM and LayoutLMv3 papers (Microsoft) for document understanding
+DocFormer (document AI)
+Semantic Matching & Retrieval
+Sentence-BERT (SBERT) — foundational for semantic similarity.
+BGE (BAAI General Embedding) technical report.
+E5 Text Embeddings (Microsoft).
+Jina Embeddings v2 technical report.
+Explainable AI
+DARPA's XAI program publications.
+Why Should I Trust You? (LIME).
+SHAP: A Unified Approach to Interpreting Model Predictions.
+LLM Evaluation
+HELM (Holistic Evaluation of Language Models).
+MT-Bench.
+AlpacaEval.
+LM Harness (EleutherAI).
+Responsible AI in Hiring
+Model Cards for Model Reporting.
+Datasheets for Datasets.
+AI Risk Management Framework (NIST AI RMF).
+OECD AI Principles.
+If your real objective is Anthropic research credits
+
+I would not write a generic white paper titled "AI Resume Screening Using LLMs." There are already many papers covering that broad idea.
+
+A stronger direction would be something narrowly focused and experimentally rigorous, such as:
+
+"Hallucination, Calibration, and Explainability in LLM-Based Resume Screening: A Comparative Evaluation of Proprietary and Open-Source Models."
+
+That title immediately signals:
+
+a measurable research question,
+comparison across multiple models,
+relevance to Responsible AI,
+and practical impact on hiring systems.
+
+It also naturally ties into topics that Anthropic, OpenAI, and the broader AI research community actively care about: reliability, transparency, and trustworthy deployment of LLMs.
